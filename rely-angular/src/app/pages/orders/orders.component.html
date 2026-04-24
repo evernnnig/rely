@@ -1,0 +1,219 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-900 to-black pt-24 px-4">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div>
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Bandeja de Órdenes</h1>
+        <p class="text-xl text-gray-400">Gestiona todas las compras de vehículos</p>
+      </div>
+      <button (click)="fetchOrders()" class="flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Actualizar
+      </button>
+    </div>
+
+    <!-- Search -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 mb-8">
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="flex-1 relative">
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Buscar por nombre, email o número de referencia..."
+            [value]="searchTerm" (input)="onSearch($any($event.target).value)"
+            class="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+        <div class="flex items-center gap-3">
+          <div class="bg-blue-600/20 p-3 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm">Total Órdenes</p>
+            <p class="text-2xl font-bold text-white">{{ orders.length }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+        <div class="flex items-center gap-3">
+          <div class="bg-green-600/20 p-3 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm">Ventas Totales</p>
+            <p class="text-2xl font-bold text-white">${{ totalVentas.toLocaleString() }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+        <div class="flex items-center gap-3">
+          <div class="bg-yellow-600/20 p-3 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm">Hoy</p>
+            <p class="text-2xl font-bold text-white">{{ ordenesHoy }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+        <div class="flex items-center gap-3">
+          <div class="bg-orange-600/20 p-3 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm">Promedio</p>
+            <p class="text-2xl font-bold text-white">${{ promedio.toLocaleString() }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 overflow-hidden">
+      <div class="p-6 border-b border-gray-700">
+        <h3 class="text-xl font-bold text-white">Órdenes Recientes ({{ filteredOrders.length }})</h3>
+      </div>
+
+      <div *ngIf="isLoading" class="p-12 text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <p class="text-gray-400">Cargando órdenes...</p>
+      </div>
+
+      <div *ngIf="!isLoading && error" class="p-12 text-center">
+        <p class="text-red-400 mb-4">{{ error }}</p>
+        <button (click)="fetchOrders()" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors">Reintentar</button>
+      </div>
+
+      <div *ngIf="!isLoading && !error && filteredOrders.length === 0" class="p-12 text-center">
+        <svg class="mx-auto text-gray-600 mb-4" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        <p class="text-gray-400">No se encontraron órdenes</p>
+      </div>
+
+      <div *ngIf="!isLoading && !error && filteredOrders.length > 0" class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-900/50">
+            <tr>
+              <th class="text-left p-4 text-gray-400 font-medium">Referencia</th>
+              <th class="text-left p-4 text-gray-400 font-medium">Cliente</th>
+              <th class="text-left p-4 text-gray-400 font-medium">Contacto</th>
+              <th class="text-left p-4 text-gray-400 font-medium">Vehículo</th>
+              <th class="text-left p-4 text-gray-400 font-medium">Precio</th>
+              <th class="text-left p-4 text-gray-400 font-medium">Fecha</th>
+              <th class="text-left p-4 text-gray-400 font-medium">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of filteredOrders" class="border-t border-gray-700 hover:bg-gray-900/30 transition-colors">
+              <td class="p-4"><span class="font-mono text-orange-500 font-medium">{{ order.referencia }}</span></td>
+              <td class="p-4">
+                <p class="text-white font-medium">{{ order.cliente_nombre }}</p>
+                <p *ngIf="order.vendedor_nombre" class="text-gray-500 text-xs">Vendedor: {{ order.vendedor_nombre }}</p>
+              </td>
+              <td class="p-4">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2 text-gray-400 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    {{ order.cliente_email }}
+                  </div>
+                  <div class="flex items-center gap-2 text-gray-400 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.56 4.41 2 2 0 0 1 3.53 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.16 6.16l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    {{ order.cliente_telefono }}
+                  </div>
+                </div>
+              </td>
+              <td class="p-4">
+                <p class="text-gray-300 text-sm">{{ order.modelo_vehiculo }}</p>
+                <p class="text-gray-500 text-xs">{{ order.color }}</p>
+              </td>
+              <td class="p-4"><span class="text-green-500 font-bold text-lg">${{ (+order.precio).toLocaleString() }}</span></td>
+              <td class="p-4">
+                <div class="text-gray-400 text-sm">
+                  {{ formatDate(order.created_at) }}<br/>
+                  {{ formatTime(order.created_at) }}
+                </div>
+              </td>
+              <td class="p-4">
+                <button (click)="openOrder(order)" class="flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors text-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  Ver
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div *ngIf="isModalOpen && selectedOrder" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gray-900 rounded-2xl w-full max-w-2xl shadow-2xl border border-gray-700">
+    <div class="flex justify-between items-center p-6 border-b border-gray-700">
+      <h2 class="text-2xl font-bold text-white">Detalles de la Orden</h2>
+      <button (click)="closeModal()" class="p-2 hover:bg-gray-800 rounded-lg transition-colors">
+        <span class="text-gray-400 text-xl">×</span>
+      </button>
+    </div>
+    <div class="p-6 space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Número de Referencia</label>
+            <div class="bg-orange-600/20 p-3 rounded-lg">
+              <p class="text-xl font-bold text-orange-500">{{ selectedOrder.referencia }}</p>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Cliente</label>
+            <p class="text-white text-lg">{{ selectedOrder.cliente_nombre }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Email</label>
+            <p class="text-gray-300">{{ selectedOrder.cliente_email }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Teléfono</label>
+            <p class="text-gray-300">{{ selectedOrder.cliente_telefono }}</p>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Precio</label>
+            <div class="bg-green-600/20 p-3 rounded-lg">
+              <p class="text-2xl font-bold text-green-500">${{ (+selectedOrder.precio).toLocaleString() }} USD</p>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Vehículo</label>
+            <p class="text-gray-300">{{ selectedOrder.modelo_vehiculo }} {{ selectedOrder.year_vehiculo ? '(' + selectedOrder.year_vehiculo + ')' : '' }} — {{ selectedOrder.color }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Método de Pago</label>
+            <p class="text-gray-300">{{ selectedOrder.metodo_pago }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Fecha de Orden</label>
+            <p class="text-gray-300">{{ formatDateFull(selectedOrder.created_at) }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Estado</label>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-600/20 text-yellow-500">{{ selectedOrder.estado }}</span>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="selectedOrder.notas">
+        <label class="block text-sm font-medium text-gray-400 mb-1">Notas</label>
+        <p class="text-gray-300 bg-gray-800 p-3 rounded-lg text-sm">{{ selectedOrder.notas }}</p>
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button class="flex-1 bg-orange-600 text-white py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors">Procesar Orden</button>
+        <button class="flex-1 bg-gray-700 text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-600 transition-colors">Contactar Cliente</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,153 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-900 to-black pt-24 px-4">
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Success screen -->
+    <div *ngIf="isSubmitted" class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-8 text-center">
+      <div class="flex justify-center mb-6">
+        <div class="bg-green-500/20 p-6 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </div>
+      <h2 class="text-3xl font-bold text-white mb-4">¡Venta Registrada Exitosamente!</h2>
+      <p class="text-gray-400 mb-6">La venta del vehículo ha sido procesada correctamente</p>
+      <div class="bg-gray-900 p-6 rounded-lg mb-6">
+        <p class="text-gray-400 mb-2">Número de Referencia:</p>
+        <p class="text-3xl font-bold text-orange-500">{{ submittedRef }}</p>
+      </div>
+      <p class="text-gray-400 text-sm">Redirigiendo al formulario en unos segundos...</p>
+    </div>
+
+    <!-- Form -->
+    <ng-container *ngIf="!isSubmitted">
+      <div class="text-center mb-8">
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Módulo de Ventas</h1>
+        <p class="text-xl text-gray-400">Registra una nueva venta de vehículo</p>
+      </div>
+
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-8">
+        <form (ngSubmit)="handleSubmit($event)" class="space-y-8">
+
+          <!-- Cliente -->
+          <div>
+            <div class="flex items-center gap-3 mb-6">
+              <div class="bg-orange-600/20 p-3 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <h3 class="text-2xl font-bold text-white">Información del Cliente</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Nombre *</label>
+                <input type="text" [(ngModel)]="formData.firstName" name="firstName" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" placeholder="Nombre del cliente" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Apellido *</label>
+                <input type="text" [(ngModel)]="formData.lastName" name="lastName" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" placeholder="Apellido del cliente" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Email *</label>
+                <div class="relative">
+                  <svg class="absolute left-3 top-1/2 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  <input type="email" [(ngModel)]="formData.email" name="email" class="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" placeholder="cliente&#64;ejemplo.com" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Teléfono *</label>
+                <div class="relative">
+                  <svg class="absolute left-3 top-1/2 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.56 4.41 2 2 0 0 1 3.53 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.16 6.16l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  <input type="tel" [(ngModel)]="formData.phone" name="phone" class="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" placeholder="+58 (0000) 000-00-00" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vehículo -->
+          <div>
+            <div class="flex items-center gap-3 mb-6">
+              <div class="bg-orange-600/20 p-3 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              </div>
+              <h3 class="text-2xl font-bold text-white">Información del Vehículo</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Modelo *</label>
+                <select [(ngModel)]="formData.vehicleModel" name="vehicleModel" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 transition-colors">
+                  <option value="">Seleccionar modelo</option>
+                  <option *ngFor="let m of vehicleModels" [value]="m">{{ m }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Año</label>
+                <input type="number" [(ngModel)]="formData.vehicleYear" name="vehicleYear" min="2020" max="2030" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 transition-colors" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Color *</label>
+                <select [(ngModel)]="formData.vehicleColor" name="vehicleColor" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 transition-colors">
+                  <option value="">Seleccionar color</option>
+                  <option *ngFor="let c of vehicleColors" [value]="c">{{ c }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pago -->
+          <div>
+            <div class="flex items-center gap-3 mb-6">
+              <div class="bg-orange-600/20 p-3 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <h3 class="text-2xl font-bold text-white">Información de Pago</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Precio (USD) *</label>
+                <input type="number" [(ngModel)]="formData.price" name="price" min="0" step="0.01" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" placeholder="50000.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Método de Pago *</label>
+                <select [(ngModel)]="formData.paymentMethod" name="paymentMethod" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 transition-colors">
+                  <option value="">Seleccionar método</option>
+                  <option *ngFor="let m of paymentMethods" [value]="m">{{ m }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Número de Referencia *</label>
+                <input type="text" [(ngModel)]="formData.referenceNumber" name="referenceNumber" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" placeholder="123456789" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <div>
+            <div class="flex items-center gap-3 mb-6">
+              <div class="bg-orange-600/20 p-3 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              </div>
+              <h3 class="text-2xl font-bold text-white">Notas Adicionales</h3>
+            </div>
+            <textarea [(ngModel)]="formData.notes" name="notes" rows="4" class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors resize-none" placeholder="Observaciones, accesorios incluidos, condiciones especiales..."></textarea>
+          </div>
+
+          <div *ngIf="error" class="bg-red-500/20 border border-red-500/50 text-red-400 p-4 rounded-lg">{{ error }}</div>
+
+          <div class="flex gap-4 pt-6">
+            <button type="submit" [disabled]="isLoading" class="flex-1 bg-orange-600 text-white py-4 rounded-lg font-medium hover:bg-orange-700 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              <ng-container *ngIf="isLoading; else submitBtn">
+                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>Procesando...
+              </ng-container>
+              <ng-template #submitBtn>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Registrar Venta
+              </ng-template>
+            </button>
+            <button type="button" (click)="clearForm()" class="px-8 bg-gray-700 text-gray-300 py-4 rounded-lg font-medium hover:bg-gray-600 transition-colors">
+              Limpiar
+            </button>
+          </div>
+        </form>
+      </div>
+    </ng-container>
+
+  </div>
+</div>

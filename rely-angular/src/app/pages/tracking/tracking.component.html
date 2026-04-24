@@ -1,0 +1,208 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-900 to-black pt-24 px-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-8">
+      <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Tracking de Vehículos</h1>
+      <p class="text-xl text-gray-400">Monitorea el estado y ubicación de todos los vehículos</p>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 mb-8">
+      <div class="flex flex-col lg:flex-row gap-4">
+        <div class="flex-1 relative">
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Buscar por ID de vehículo, cliente o referencia..."
+            [value]="searchTerm" (input)="onSearch($any($event.target).value)"
+            class="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" />
+        </div>
+        <div class="flex gap-3 flex-wrap">
+          <button *ngFor="let opt of statusOptions" (click)="setStatusFilter(opt.value)"
+            [class]="statusFilter === opt.value ? 'bg-orange-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'"
+            class="px-4 py-3 rounded-lg font-medium transition-colors">
+            {{ opt.label }} ({{ getCount(opt.value) }})
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+        <div class="flex items-center gap-3">
+          <div class="bg-blue-600/20 p-3 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <div><p class="text-gray-400 text-sm">En Manufactura</p><p class="text-2xl font-bold text-white">{{ getCount('manufacturing') }}</p></div>
+        </div>
+      </div>
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+        <div class="flex items-center gap-3">
+          <div class="bg-yellow-600/20 p-3 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          </div>
+          <div><p class="text-gray-400 text-sm">En Tránsito</p><p class="text-2xl font-bold text-white">{{ getCount('in_transit') }}</p></div>
+        </div>
+      </div>
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+        <div class="flex items-center gap-3">
+          <div class="bg-green-600/20 p-3 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div><p class="text-gray-400 text-sm">Entregados</p><p class="text-2xl font-bold text-white">{{ getCount('delivered') }}</p></div>
+        </div>
+      </div>
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+        <div class="flex items-center gap-3">
+          <div class="bg-orange-600/20 p-3 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+          </div>
+          <div><p class="text-gray-400 text-sm">Total Activos</p><p class="text-2xl font-bold text-white">{{ getCount('all') }}</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid de cards -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 overflow-hidden">
+      <div class="p-6 border-b border-gray-700">
+        <h3 class="text-xl font-bold text-white">Vehículos en Seguimiento ({{ filteredData.length }})</h3>
+      </div>
+
+      <div *ngIf="filteredData.length === 0" class="p-12 text-center">
+        <svg class="mx-auto text-gray-600 mb-4" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <p class="text-gray-400">No se encontraron vehículos</p>
+      </div>
+
+      <div *ngIf="filteredData.length > 0" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 p-6">
+        <div *ngFor="let tracking of filteredData"
+          (click)="openModal(tracking)"
+          class="bg-gray-900/50 rounded-xl border border-gray-700 p-6 hover:border-orange-600 transition-all cursor-pointer">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h4 class="text-white font-bold text-lg mb-1">{{ tracking.vehicleId }}</h4>
+              <p class="text-gray-400">{{ tracking.customerName }}</p>
+            </div>
+            <span [class]="statusConfig[tracking.status].colorClass + ' ' + statusConfig[tracking.status].textClass" class="px-2 py-1 rounded-full text-xs font-medium">
+              {{ statusConfig[tracking.status].label }}
+            </span>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-2 text-gray-400 text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span class="truncate">{{ tracking.currentLocation }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-400 text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Entrega: {{ formatDate(tracking.estimatedDelivery) }}
+            </div>
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-400">Progreso</span>
+                <span class="text-white">{{ tracking.progress }}%</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-2">
+                <div class="bg-orange-500 h-2 rounded-full transition-all duration-300" [style.width.%]="tracking.progress"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-gray-700">
+            <p class="text-xs text-gray-500">Ref: {{ tracking.referenceNumber }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de detalles -->
+<div *ngIf="isModalOpen && selectedTracking" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gray-900 rounded-2xl w-full max-w-4xl shadow-2xl border border-gray-700 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center p-6 border-b border-gray-700">
+      <h2 class="text-2xl font-bold text-white">Detalles de Tracking</h2>
+      <button (click)="closeModal()" class="p-2 hover:bg-gray-800 rounded-lg transition-colors">
+        <span class="text-gray-400 text-xl">×</span>
+      </button>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-xl font-bold text-white mb-4">Información del Vehículo</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-1">ID del Vehículo</label>
+                <p class="text-white font-mono">{{ selectedTracking.vehicleId }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-1">Cliente</label>
+                <p class="text-white">{{ selectedTracking.customerName }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-1">Número de Referencia</label>
+                <p class="text-orange-500 font-mono">{{ selectedTracking.referenceNumber }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-1">Estado Actual</label>
+                <span [class]="statusConfig[selectedTracking.status].colorClass + ' ' + statusConfig[selectedTracking.status].textClass" class="px-3 py-1 rounded-full text-sm font-medium">
+                  {{ statusConfig[selectedTracking.status].label }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-white mb-4">Ubicación y Entrega</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-1">Ubicación Actual</label>
+                <p class="text-white">{{ selectedTracking.currentLocation }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-1">Entrega Estimada</label>
+                <p class="text-white">{{ formatDateFull(selectedTracking.estimatedDelivery) }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-1">Progreso</label>
+                <div class="space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-400">Completado</span>
+                    <span class="text-white">{{ selectedTracking.progress }}%</span>
+                  </div>
+                  <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div class="bg-orange-500 h-2 rounded-full transition-all duration-300" [style.width.%]="selectedTracking.progress"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-xl font-bold text-white mb-4">Historial de Tracking</h3>
+          <div class="space-y-4">
+            <div *ngFor="let event of selectedTracking.trackingHistory; let i = index; let last = last" class="relative">
+              <div *ngIf="!last" class="absolute left-4 top-8 w-0.5 h-16 bg-gray-700"></div>
+              <div class="flex gap-4">
+                <div class="bg-orange-600/20 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+                </div>
+                <div class="flex-1">
+                  <div class="bg-gray-800/50 p-4 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="font-semibold text-white">{{ event.status }}</h4>
+                      <span class="text-xs text-gray-400">{{ formatDateTime(event.timestamp) }}</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-1">{{ event.location }}</p>
+                    <p class="text-gray-300 text-sm">{{ event.description }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-6 mt-6 border-t border-gray-700">
+        <button class="flex-1 bg-orange-600 text-white py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors">Ver en Mapa</button>
+        <button class="flex-1 bg-gray-700 text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-600 transition-colors">Notificar Cliente</button>
+      </div>
+    </div>
+  </div>
+</div>

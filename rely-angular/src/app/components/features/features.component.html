@@ -1,0 +1,22 @@
+<section id="caracteristicas" class="py-24 bg-gradient-to-b from-black to-gray-900">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">Ingeniería de Excelencia</h2>
+      <p class="text-xl text-gray-400 max-w-2xl mx-auto">Cada detalle diseñado para superar tus expectativas</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div
+        *ngFor="let feature of features"
+        class="bg-gray-800/50 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 hover:border-orange-600 transition-all transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-orange-600/20">
+        <div class="bg-orange-600/10 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path [attr.d]="feature.iconPath"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-3">{{ feature.title }}</h3>
+        <p class="text-gray-400 leading-relaxed">{{ feature.description }}</p>
+      </div>
+    </div>
+  </div>
+</section>

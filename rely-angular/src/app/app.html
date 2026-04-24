@@ -1,0 +1,18 @@
+<div class="min-h-screen bg-black">
+  <app-navigation
+    [currentView]="currentView"
+    [isAuthenticated]="isAuth"
+    [userEmail]="userEmail"
+    (viewChange)="handleViewChange($event)"
+    (login)="isLoginOpen = true"
+    (logout)="handleLogout()"
+  ></app-navigation>
+
+  <router-outlet></router-outlet>
+
+  <app-login
+    [isOpen]="isLoginOpen"
+    (closeModal)="isLoginOpen = false"
+    (loginSuccess)="handleLoginSuccess($event)"
+  ></app-login>
+</div>
