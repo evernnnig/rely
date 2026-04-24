@@ -111,7 +111,7 @@
               <td class="p-4"><span class="font-mono text-orange-500 font-medium">{{ order.referencia }}</span></td>
               <td class="p-4">
                 <p class="text-white font-medium">{{ order.cliente_nombre }}</p>
-                <p *ngIf="order.vendedor_nombre" class="text-gray-500 text-xs">Vendedor: {{ order.vendedor_nombre }}</p>
+                <p class="text-gray-500 text-xs">{{ order.first_name }} {{ order.last_name }}</p>
               </td>
               <td class="p-4">
                 <div class="space-y-1">

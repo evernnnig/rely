@@ -17,14 +17,12 @@ export class App implements OnInit {
   constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
-    if (!this.authService.isAuthenticated()) return;
-
-    this.authService.getCurrentUser().then((user) => {
-      if (user) {
-        this.isAuth = true;
-        this.userEmail = user.email;
-      }
+    this.authService.currentUser$.subscribe((user) => {
+      this.isAuth = !!user;
+      this.userEmail = user?.email ?? '';
     });
+
+    this.authService.getCurrentUser();
   }
 
   get currentView(): ViewType {

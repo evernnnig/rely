@@ -1,13 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { ApiClientService } from './api-client.service';
+import { SupabaseClientService } from './supabase-client.service';
+import { User } from '@supabase/supabase-js';
 
 export interface AuthUser {
-  id: number;
-  username: string;
+  id: string;
   email: string;
-  first_name: string;
-  last_name: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -15,61 +13,65 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<AuthUser | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private api: ApiClientService) {}
+  constructor(private supabase: SupabaseClientService) {
+    this.supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        this.currentUserSubject.next({
+          id: session.user.id,
+          email: session.user.email ?? '',
+        });
+      } else {
+        this.currentUserSubject.next(null);
+      }
+    });
+  }
 
   async login(email: string, password: string): Promise<AuthUser> {
-    const res = await fetch('http://localhost:8000/api/auth/login/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+    const { data, error } = await this.supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      const message =
-        data.non_field_errors?.[0] ||
-        data.detail ||
-        'Credenciales inválidas';
-      throw new Error(message);
+    if (error) {
+      throw new Error(
+        error.message === 'Invalid login credentials'
+          ? 'Credenciales inválidas'
+          : error.message
+      );
     }
 
-    this.api.saveTokens(data.access, data.refresh);
-    const user = data.user as AuthUser;
+    const user: AuthUser = {
+      id: data.user.id,
+      email: data.user.email ?? '',
+    };
     this.currentUserSubject.next(user);
     return user;
   }
 
   async logout(): Promise<void> {
-    const refresh = this.api.getRefreshToken();
-    try {
-      await this.api.apiFetch('/api/auth/logout/', {
-        method: 'POST',
-        body: JSON.stringify({ refresh }),
-      });
-    } finally {
-      this.api.clearTokens();
-      this.currentUserSubject.next(null);
-    }
+    await this.supabase.auth.signOut();
+    this.currentUserSubject.next(null);
   }
 
   isAuthenticated(): boolean {
-    return !!this.api.getAccessToken();
+    return !!this.supabase.auth.getSession();
   }
 
   async getCurrentUser(): Promise<AuthUser | null> {
-    try {
-      const res = await this.api.apiFetch('/api/auth/me/');
-      if (!res.ok) {
-        this.api.clearTokens();
-        return null;
-      }
-      const user = await res.json() as AuthUser;
-      this.currentUserSubject.next(user);
-      return user;
-    } catch {
+    const {
+      data: { session },
+    } = await this.supabase.auth.getSession();
+
+    if (!session?.user) {
       return null;
     }
+
+    const user: AuthUser = {
+      id: session.user.id,
+      email: session.user.email ?? '',
+    };
+    this.currentUserSubject.next(user);
+    return user;
   }
 
   getCurrentUserValue(): AuthUser | null {
