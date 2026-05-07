@@ -1,5 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { VentasService } from '../../services/ventas.service';
+import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
 
 interface VehicleData {
   price: number;
@@ -45,10 +44,8 @@ export class PurchaseComponent {
   error = '';
 
   get currentVehicle(): VehicleData {
-    return this.vehicleData || { price: 50000.0, model: 'RELY', year: 2024, color: 'Blanco' };
+    return this.vehicleData || { price: 50000.00, model: 'RELY', year: 2024, color: 'Blanco' };
   }
-
-  constructor(private ventasService: VentasService) {}
 
   handleInputChange(field: keyof FormData, value: string): void {
     this.formData = { ...this.formData, [field]: value };
@@ -67,29 +64,50 @@ export class PurchaseComponent {
 
     this.isLoading = true;
 
+    const dataToSend = {
+      first_name: this.formData.first_name,
+      last_name: this.formData.last_name,
+      email: this.formData.email,
+      phone: this.formData.phone,
+      reference_number: this.formData.reference_number,
+      price: this.currentVehicle.price,
+      vehicleModel: this.currentVehicle.model,
+      vehicleYear: this.currentVehicle.year,
+      vehicleColor: this.currentVehicle.color,
+      paymentMethod: this.formData.paymentMethod,
+      notes: this.formData.notes,
+    };
+
     try {
-      await this.ventasService.createOrder({
-        first_name: this.formData.first_name,
-        last_name: this.formData.last_name,
-        email: this.formData.email,
-        phone: this.formData.phone,
-        reference_number: this.formData.reference_number,
-        price: this.currentVehicle.price,
-        vehicleModel: this.currentVehicle.model,
-        vehicleYear: this.currentVehicle.year,
-        vehicleColor: this.currentVehicle.color,
-        paymentMethod: this.formData.paymentMethod,
-        notes: this.formData.notes,
+      const response = await fetch('http://localhost:8000/api/ordenes/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('rely_access')}`,
+        },
+        body: JSON.stringify(dataToSend),
       });
 
-      this.isSubmitted = true;
-      setTimeout(() => {
-        this.closeModal.emit();
-        this.formData = { ...emptyForm };
-        this.isSubmitted = false;
-      }, 4000);
-    } catch (err) {
-      this.error = err instanceof Error ? err.message : 'Hubo un problema al procesar la orden.';
+      const result = await response.json();
+
+      if (response.ok) {
+        this.isSubmitted = true;
+        setTimeout(() => {
+          this.closeModal.emit();
+          this.formData = { ...emptyForm };
+          this.isSubmitted = false;
+        }, 4000);
+      } else {
+        if (result.reference_number) {
+          this.error = `Error: ${result.reference_number[0]}`;
+        } else if (result.detail) {
+          this.error = 'No tienes permiso o tu sesión expiró.';
+        } else {
+          this.error = 'Hubo un problema al procesar la orden.';
+        }
+      }
+    } catch {
+      this.error = 'No se pudo conectar con el servidor de ventas.';
     } finally {
       this.isLoading = false;
     }

@@ -26,26 +26,34 @@
           Características
         </button>
 
-        <ng-container *ngIf="isAuthenticated">
-          <button
-            (click)="handleNavigation('sales')"
-            [class]="currentView === 'sales' ? 'text-orange-500' : 'text-gray-300 hover:text-white'"
-            class="transition-colors">
-            Ventas
-          </button>
-          <button
-            (click)="handleNavigation('orders')"
-            [class]="currentView === 'orders' ? 'text-orange-500' : 'text-gray-300 hover:text-white'"
-            class="transition-colors">
-            Órdenes
-          </button>
-          <button
-            (click)="handleNavigation('tracking')"
-            [class]="currentView === 'tracking' ? 'text-orange-500' : 'text-gray-300 hover:text-white'"
-            class="transition-colors">
-            Tracking
-          </button>
-        </ng-container>
+        <button
+          *ngIf="canAccess('sales')"
+          (click)="handleNavigation('sales')"
+          [class]="currentView === 'sales' ? 'text-orange-500' : 'text-gray-300 hover:text-white'"
+          class="transition-colors">
+          Ventas
+        </button>
+        <button
+          *ngIf="canAccess('orders')"
+          (click)="handleNavigation('orders')"
+          [class]="currentView === 'orders' ? 'text-orange-500' : 'text-gray-300 hover:text-white'"
+          class="transition-colors">
+          Órdenes
+        </button>
+        <button
+          *ngIf="canAccess('tracking')"
+          (click)="handleNavigation('tracking')"
+          [class]="currentView === 'tracking' ? 'text-orange-500' : 'text-gray-300 hover:text-white'"
+          class="transition-colors">
+          Tracking
+        </button>
+        <button
+          *ngIf="userRole === 'Administrador'"
+          (click)="handleNavigation('admin')"
+          [class]="currentView === 'admin' ? 'text-orange-500' : 'text-gray-300 hover:text-white'"
+          class="transition-colors">
+          Administración
+        </button>
 
         <button
           (click)="handleNavigation('home', 'contacto')"
@@ -90,11 +98,10 @@
       <button (click)="handleNavigation('home', 'vehiculos')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Vehículos</button>
       <button (click)="handleNavigation('home', 'caracteristicas')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Características</button>
 
-      <ng-container *ngIf="isAuthenticated">
-        <button (click)="handleNavigation('sales')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Ventas</button>
-        <button (click)="handleNavigation('orders')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Órdenes</button>
-        <button (click)="handleNavigation('tracking')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Tracking</button>
-      </ng-container>
+      <button *ngIf="canAccess('sales')" (click)="handleNavigation('sales')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Ventas</button>
+      <button *ngIf="canAccess('orders')" (click)="handleNavigation('orders')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Órdenes</button>
+      <button *ngIf="canAccess('tracking')" (click)="handleNavigation('tracking')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Tracking</button>
+      <button *ngIf="userRole === 'Administrador'" (click)="handleNavigation('admin')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Administración</button>
 
       <button (click)="handleNavigation('home', 'contacto')" class="block w-full bg-orange-600 text-white px-6 py-2 rounded-full hover:bg-orange-700 transition-colors mt-2">Contacto</button>
 

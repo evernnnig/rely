@@ -1,13 +1,104 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
+/* Configuración base - ILUMINADA */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    background-color: #0a0a0a; /* Un poco más claro que #000 */
+    color: #ffffff;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0a0a0a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #444444;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #666666;
+  }
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Componentes personalizados */
+@layer components {
+  /* Efectos de vidrio */
+  .glass-sm {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .glass-md {
+    background: rgba(20, 20, 20, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Gradientes más claros */
+  .gradient-dark {
+    background: linear-gradient(to bottom, #111111, #1a1a1a);
+  }
+
+  .gradient-card {
+    background: linear-gradient(to bottom, #1a1a1a, #151515);
+  }
+
+  /* Bordes más visibles */
+  .border-subtle {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .border-glow {
+    border: 1px solid rgba(249, 115, 22, 0.25);
+  }
+}
+
+/* Utilidades */
+@layer utilities {
+  /* Sombras para dar profundidad */
+  .shadow-soft {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 30px rgba(249, 115, 22, 0.2);
+  }
+
+  /* Overlay gradients más suaves */
+  .overlay-soft {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+  }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

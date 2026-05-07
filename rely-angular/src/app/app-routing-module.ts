@@ -3,19 +3,48 @@ import { RouterModule, Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
 import { SalesComponent } from './pages/sales/sales.component';
 import { OrdersComponent } from './pages/orders/orders.component';
+import { OrderDetailComponent } from './pages/orders/order-detail.component';
 import { TrackingComponent } from './pages/tracking/tracking.component';
-import { AuthGuard } from './guards/auth.guard';
+import { AdminComponent } from './pages/admin/admin.component';
+import { RoleGuard } from './guards/role.guard';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
-  { path: 'ventas', component: SalesComponent, canActivate: [AuthGuard] },
-  { path: 'ordenes', component: OrdersComponent, canActivate: [AuthGuard] },
-  { path: 'tracking', component: TrackingComponent, canActivate: [AuthGuard] },
+  {
+    path: 'ventas',
+    component: SalesComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['Vendedor'] },
+  },
+  {
+    path: 'ordenes',
+    component: OrdersComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['Gerente'] },
+  },
+  {
+    path: 'ordenes/:id',
+    component: OrderDetailComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['Gerente'] },
+  },
+  {
+    path: 'tracking',
+    component: TrackingComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['Vendedor', 'Gerente'] },
+  },
+  {
+    path: 'admin',
+    component: AdminComponent,
+    canActivate: [RoleGuard],
+    data: { roles: [] },
+  },
   { path: '**', redirectTo: '' },
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, { scrollPositionRestoration: 'top' })],
-  exports: [RouterModule],
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

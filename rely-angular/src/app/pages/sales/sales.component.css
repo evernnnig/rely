@@ -1,0 +1,86 @@
+/* Estilos adicionales para las tarjetas de vehículos */
+.vehiculo-card {
+  transition: all 0.3s ease;
+}
+
+.vehiculo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(249, 115, 22, 0.1);
+}
+
+/* Animación de carga */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Estilos para el scroll en caso de muchas tarjetas */
+.vehiculos-grid {
+  max-height: 600px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #f97316 #1f2937;
+}
+
+.vehiculos-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.vehiculos-grid::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 3px;
+}
+
+.vehiculos-grid::-webkit-scrollbar-thumb {
+  background-color: #f97316;
+  border-radius: 3px;
+}
+
+/* Animación para las tarjetas de color */
+.color-dot {
+  transition: all 0.3s ease;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.color-dot:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.5), 0 0 15px rgba(249, 115, 22, 0.3);
+}
+
+/* Efecto de brillo para colores metálicos */
+.color-dot.metallic {
+  background-image: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.2) 100%);
+}
+
+/* Mejora visual para las tarjetas de unidades */
+.vehiculo-card:hover .color-dot {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.5);
+}
+/* Evitar que números largos rompan el layout */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Texto truncado con elipsis */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Barra de progreso suave */
+.progress-bar {
+  transition: width 0.5s ease-in-out;
+}

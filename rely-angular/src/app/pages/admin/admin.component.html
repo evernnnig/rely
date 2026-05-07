@@ -1,0 +1,465 @@
+<!-- Toast notifications (fijas, siempre visibles) -->
+<div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none">
+  <div *ngFor="let toast of toasts"
+    class="pointer-events-auto flex items-start gap-3 px-5 py-4 rounded-xl shadow-2xl border backdrop-blur-sm min-w-72 max-w-sm animate-fade-in"
+    [ngClass]="toast.type === 'success'
+      ? 'bg-gray-900/95 border-green-500/40 text-green-400'
+      : 'bg-gray-900/95 border-red-500/40 text-red-400'">
+    <svg *ngIf="toast.type === 'success'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"/></svg>
+    <svg *ngIf="toast.type === 'error'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span class="text-sm font-medium text-white flex-1">{{ toast.message }}</span>
+    <button (click)="dismissToast(toast.id)" class="text-gray-500 hover:text-gray-300 transition-colors flex-shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-900 to-black pt-24 px-4 pb-10">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="text-center mb-8">
+      <h1 class="text-4xl md:text-5xl font-bold text-white mb-2">Administración</h1>
+      <p class="text-gray-400">Gestión de usuarios y roles del sistema</p>
+    </div>
+
+    <div class="flex gap-6 items-start">
+
+      <!-- ── Sidebar ── -->
+      <aside class="w-56 flex-shrink-0">
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-3 space-y-1 sticky top-24">
+
+          <button (click)="setSection('create')"
+            [class]="section === 'create'
+              ? 'bg-orange-600 text-white'
+              : 'text-gray-300 hover:bg-gray-700/60 hover:text-white'"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            Crear Empleado
+          </button>
+
+          <button (click)="setSection('modify')"
+            [class]="section === 'modify'
+              ? 'bg-orange-600 text-white'
+              : 'text-gray-300 hover:bg-gray-700/60 hover:text-white'"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Modificar Empleado
+          </button>
+
+        </div>
+      </aside>
+
+      <!-- ── Contenido ── -->
+      <main class="flex-1 min-w-0">
+
+        <!-- ════ SECCIÓN: CREAR ════ -->
+        <ng-container *ngIf="section === 'create'">
+
+          <!-- Success -->
+          <div *ngIf="createSuccess" class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-8 text-center">
+            <div class="flex justify-center mb-6">
+              <div class="bg-green-500/20 p-6 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </div>
+            <h2 class="text-3xl font-bold text-white mb-4">¡Usuario Creado!</h2>
+            <div class="bg-gray-900 p-6 rounded-lg mb-4 space-y-1">
+              <p class="text-gray-400 text-sm">Cédula</p>
+              <p class="text-2xl font-bold text-orange-500">{{ createdUsername }}</p>
+              <p class="text-gray-400 text-sm mt-3">Rol asignado</p>
+              <p class="text-lg font-semibold text-white">{{ createdRole }}</p>
+            </div>
+            <p class="text-gray-500 text-sm">Redirigiendo al formulario en unos segundos...</p>
+          </div>
+
+          <!-- Form -->
+          <div *ngIf="!createSuccess" class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-8">
+            <form (ngSubmit)="handleCreate($event)" class="space-y-8">
+
+              <!-- Datos personales -->
+              <div>
+                <div class="flex items-center gap-3 mb-5">
+                  <div class="bg-orange-600/20 p-2.5 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  <h3 class="text-xl font-bold text-white">Datos Personales</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Nombre *</label>
+                    <input type="text" [(ngModel)]="createForm.first_name" name="first_name"
+                      class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                      placeholder="Nombre" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Apellido *</label>
+                    <input type="text" [(ngModel)]="createForm.last_name" name="last_name"
+                      class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                      placeholder="Apellido" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Credenciales -->
+              <div>
+                <div class="flex items-center gap-3 mb-5">
+                  <div class="bg-orange-600/20 p-2.5 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </div>
+                  <h3 class="text-xl font-bold text-white">Credenciales de Acceso</h3>
+                </div>
+                <div class="space-y-5">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Correo Electrónico *</label>
+                    <div class="relative">
+                      <svg class="absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                      <input type="email" [(ngModel)]="createForm.email" name="email"
+                        class="w-full pl-11 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                        placeholder="usuario@empresa.com" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-2">Cédula *</label>
+                      <input type="text" [(ngModel)]="createForm.username" name="username"
+                        class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                        placeholder="Ej: 12345678" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-2">Contraseña *</label>
+                      <input type="password" [(ngModel)]="createForm.password" name="password"
+                        class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                        placeholder="Mínimo 6 caracteres" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Rol -->
+              <div>
+                <div class="flex items-center gap-3 mb-5">
+                  <div class="bg-orange-600/20 p-2.5 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  </div>
+                  <h3 class="text-xl font-bold text-white">Rol del Usuario</h3>
+                </div>
+                <div *ngIf="isLoadingRoles" class="flex items-center gap-2 text-gray-400 py-3">
+                  <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+                  Cargando roles...
+                </div>
+                <select *ngIf="!isLoadingRoles" [(ngModel)]="createForm.role" name="role"
+                  class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 transition-colors">
+                  <option value="">Seleccionar rol</option>
+                  <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+                </select>
+              </div>
+
+              <!-- Datos de contacto -->
+              <div>
+                <div class="flex items-center gap-3 mb-5">
+                  <div class="bg-orange-600/20 p-2.5 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.75a16 16 0 0 0 6.29 6.29l1.27-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  </div>
+                  <h3 class="text-xl font-bold text-white">Datos de Contacto</h3>
+                </div>
+                <div class="space-y-5">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-2">Teléfono principal</label>
+                      <input type="text" [(ngModel)]="createForm.telefono_1" name="telefono_1"
+                        class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                        placeholder="Ej: 04241234567" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-2">Teléfono secundario <span class="text-gray-500 font-normal">(opcional)</span></label>
+                      <input type="text" [(ngModel)]="createForm.telefono_2" name="telefono_2"
+                        class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                        placeholder="Ej: 02121234567" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Dirección <span class="text-gray-500 font-normal">(opcional)</span></label>
+                    <input type="text" [(ngModel)]="createForm.direccion" name="direccion"
+                      class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                      placeholder="Ej: Av. Principal, Caracas" />
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="createError" class="bg-red-500/20 border border-red-500/50 text-red-400 p-4 rounded-lg">{{ createError }}</div>
+
+              <div class="flex gap-4 pt-2">
+                <button type="submit" [disabled]="isCreating || isLoadingRoles"
+                  class="flex-1 bg-orange-600 text-white py-4 rounded-lg font-medium hover:bg-orange-700 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                  <ng-container *ngIf="isCreating; else submitCreateBtn">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Creando usuario...
+                  </ng-container>
+                  <ng-template #submitCreateBtn>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    Crear Usuario
+                  </ng-template>
+                </button>
+                <button type="button" (click)="clearCreateForm()"
+                  class="px-8 bg-gray-700 text-gray-300 py-4 rounded-lg font-medium hover:bg-gray-600 transition-colors">
+                  Limpiar
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+        </ng-container>
+
+        <!-- ════ SECCIÓN: MODIFICAR ════ -->
+        <ng-container *ngIf="section === 'modify'">
+
+          <!-- Lista de usuarios -->
+          <ng-container *ngIf="modifyView === 'list'">
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 overflow-hidden">
+
+              <div class="flex items-center justify-between px-6 py-5 border-b border-gray-700">
+                <h2 class="text-xl font-bold text-white">Usuarios registrados</h2>
+                <button (click)="loadUsers()" [disabled]="isLoadingUsers"
+                  class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm disabled:opacity-50">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    [class.animate-spin]="isLoadingUsers"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                  Actualizar
+                </button>
+              </div>
+
+              <div *ngIf="isLoadingUsers" class="flex items-center justify-center gap-3 py-16 text-gray-400">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
+                Cargando usuarios...
+              </div>
+
+              <div *ngIf="loadUsersError && !isLoadingUsers" class="p-6 text-red-400 text-center">{{ loadUsersError }}</div>
+
+              <div *ngIf="!isLoadingUsers && !loadUsersError" class="overflow-x-auto">
+                <table class="w-full">
+                  <thead>
+                    <tr class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-gray-700">
+                      <th class="px-6 py-4">Usuario</th>
+                      <th class="px-6 py-4">Email</th>
+                      <th class="px-6 py-4">Rol</th>
+                      <th class="px-6 py-4">Estado</th>
+                      <th class="px-6 py-4"></th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-700/50">
+                    <tr *ngFor="let user of users" class="hover:bg-gray-700/20 transition-colors">
+                      <td class="px-6 py-4">
+                        <div class="font-medium text-white">{{ user.first_name }} {{ user.last_name }}</div>
+                        <div class="text-sm text-gray-400">CI: {{ user.username }}</div>
+                      </td>
+                      <td class="px-6 py-4 text-gray-300 text-sm">{{ user.email }}</td>
+                      <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-medium"
+                          [ngClass]="{
+                            'bg-orange-500/20 text-orange-400': user.role === 'Administrador',
+                            'bg-blue-500/20 text-blue-400': user.role === 'Vendedor',
+                            'bg-purple-500/20 text-purple-400': user.role === 'Gerente',
+                            'bg-gray-600/40 text-gray-400': !user.role
+                          }">
+                          {{ user.role || 'Sin rol' }}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-medium"
+                          [ngClass]="user.is_active
+                            ? 'bg-green-500/20 text-green-400'
+                            : 'bg-red-500/20 text-red-400'">
+                          {{ user.is_active ? 'Activo' : 'Deshabilitado' }}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <button (click)="selectUser(user)"
+                          class="flex items-center gap-1.5 text-sm text-gray-400 hover:text-orange-400 transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          Editar
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p *ngIf="users.length === 0" class="text-center text-gray-500 py-12">No hay usuarios registrados.</p>
+              </div>
+
+            </div>
+          </ng-container>
+
+          <!-- Formulario de edición -->
+          <ng-container *ngIf="modifyView === 'edit' && selectedUser">
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-8">
+
+              <div class="flex items-center gap-4 mb-8 pb-6 border-b border-gray-700">
+                <button (click)="backToList()" class="text-gray-400 hover:text-white transition-colors flex-shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                </button>
+                <div>
+                  <h2 class="text-xl font-bold text-white">Editando: {{ selectedUser.first_name }} {{ selectedUser.last_name }}</h2>
+                  <p class="text-sm text-gray-400">{{ selectedUser.email }}</p>
+                </div>
+              </div>
+
+              <form (ngSubmit)="handleEdit($event)" class="space-y-8">
+
+                <!-- Datos personales -->
+                <div>
+                  <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-orange-600/20 p-2.5 rounded-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Datos Personales</h3>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-2">Nombre *</label>
+                      <input type="text" [(ngModel)]="editForm.first_name" name="edit_first_name"
+                        class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-2">Apellido *</label>
+                      <input type="text" [(ngModel)]="editForm.last_name" name="edit_last_name"
+                        class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Credenciales -->
+                <div>
+                  <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-orange-600/20 p-2.5 rounded-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Credenciales</h3>
+                  </div>
+                  <div class="space-y-5">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-2">Correo Electrónico *</label>
+                      <div class="relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <input type="email" [(ngModel)]="editForm.email" name="edit_email"
+                          class="w-full pl-11 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" />
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Cédula *</label>
+                        <input type="text" [(ngModel)]="editForm.username" name="edit_username"
+                          class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                          Nueva contraseña
+                          <span class="text-gray-500 font-normal ml-1">(dejar vacío para no cambiar)</span>
+                        </label>
+                        <input type="password" [(ngModel)]="editForm.password" name="edit_password"
+                          class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                          placeholder="Mínimo 6 caracteres" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Rol y estado -->
+                <div>
+                  <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-orange-600/20 p-2.5 rounded-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Rol y Estado</h3>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-end">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-2">Rol *</label>
+                      <div *ngIf="isLoadingRoles" class="flex items-center gap-2 text-gray-400 py-3">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+                        Cargando roles...
+                      </div>
+                      <select *ngIf="!isLoadingRoles" [(ngModel)]="editForm.role" name="edit_role"
+                        class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 transition-colors">
+                        <option value="">Sin rol</option>
+                        <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-3">Estado de la cuenta</label>
+                      <button type="button" (click)="editForm.is_active = !editForm.is_active"
+                        class="flex items-center gap-3 px-5 py-3 rounded-lg border transition-colors w-full"
+                        [ngClass]="editForm.is_active
+                          ? 'bg-green-500/10 border-green-500/40 text-green-400 hover:bg-green-500/20'
+                          : 'bg-red-500/10 border-red-500/40 text-red-400 hover:bg-red-500/20'">
+                        <div class="w-10 h-5 rounded-full relative transition-colors flex-shrink-0"
+                          [ngClass]="editForm.is_active ? 'bg-green-500' : 'bg-gray-600'">
+                          <div class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all"
+                            [ngClass]="editForm.is_active ? 'right-0.5' : 'left-0.5'"></div>
+                        </div>
+                        <span class="font-medium">{{ editForm.is_active ? 'Cuenta activa' : 'Cuenta deshabilitada' }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Datos de contacto -->
+                <div>
+                  <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-orange-600/20 p-2.5 rounded-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.75a16 16 0 0 0 6.29 6.29l1.27-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Datos de Contacto</h3>
+                  </div>
+                  <div class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Teléfono principal</label>
+                        <input type="text" [(ngModel)]="editForm.telefono_1" name="edit_telefono_1"
+                          class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                          placeholder="Ej: 04241234567" />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Teléfono secundario <span class="text-gray-500 font-normal">(opcional)</span></label>
+                        <input type="text" [(ngModel)]="editForm.telefono_2" name="edit_telefono_2"
+                          class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                          placeholder="Ej: 02121234567" />
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-2">Dirección <span class="text-gray-500 font-normal">(opcional)</span></label>
+                      <input type="text" [(ngModel)]="editForm.direccion" name="edit_direccion"
+                        class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                        placeholder="Ej: Av. Principal, Caracas" />
+                    </div>
+                  </div>
+                </div>
+
+                <div *ngIf="editError" class="bg-red-500/20 border border-red-500/50 text-red-400 p-4 rounded-lg">{{ editError }}</div>
+
+                <div class="flex gap-4 pt-2">
+                  <button type="submit" [disabled]="isSaving"
+                    class="flex-1 bg-orange-600 text-white py-4 rounded-lg font-medium hover:bg-orange-700 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <ng-container *ngIf="isSaving; else submitEditBtn">
+                      <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      Guardando...
+                    </ng-container>
+                    <ng-template #submitEditBtn>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                      Guardar Cambios
+                    </ng-template>
+                  </button>
+                  <button type="button" (click)="backToList()"
+                    class="px-8 bg-gray-700 text-gray-300 py-4 rounded-lg font-medium hover:bg-gray-600 transition-colors">
+                    Cancelar
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </ng-container>
+
+        </ng-container>
+
+      </main>
+    </div>
+  </div>
+</div>

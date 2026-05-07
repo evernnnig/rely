@@ -1,21 +1,29 @@
-<section id="caracteristicas" class="py-24 bg-gradient-to-b from-black to-gray-900">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-16">
-      <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">Ingeniería de Excelencia</h2>
-      <p class="text-xl text-gray-400 max-w-2xl mx-auto">Cada detalle diseñado para superar tus expectativas</p>
+<section id="caracteristicas" class="py-32 bg-gray-900 relative overflow-hidden">
+  <!-- Elementos decorativos -->
+  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-orange-600/8 via-transparent to-transparent"></div>
+  
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+    <div class="text-center mb-20">
+      <span class="text-orange-500 text-sm font-medium tracking-widest uppercase mb-4 block">Excelencia Técnica</span>
+      <h2 class="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">Ingeniería de Precisión</h2>
+      <p class="text-xl text-gray-300 max-w-2xl mx-auto font-light">Cada componente diseñado para superar los límites de lo posible</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
       <div
-        *ngFor="let feature of features"
-        class="bg-gray-800/50 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 hover:border-orange-600 transition-all transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-orange-600/20">
-        <div class="bg-orange-600/10 w-16 h-16 rounded-full flex items-center justify-center mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path [attr.d]="feature.iconPath"/>
-          </svg>
+        *ngFor="let feature of features; let i = index"
+        class="group bg-gradient-to-b from-gray-800 to-gray-850 p-8 rounded-2xl border border-gray-700/50 hover:border-orange-500/40 transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-orange-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        
+        <div class="relative z-10">
+          <div class="bg-orange-600/15 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-600/25 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path [attr.d]="feature.iconPath"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-3">{{ feature.title }}</h3>
+          <p class="text-gray-400 leading-relaxed text-sm">{{ feature.description }}</p>
         </div>
-        <h3 class="text-xl font-bold text-white mb-3">{{ feature.title }}</h3>
-        <p class="text-gray-400 leading-relaxed">{{ feature.description }}</p>
       </div>
     </div>
   </div>

@@ -2,6 +2,7 @@ import { NgModule, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
@@ -16,7 +17,9 @@ import { PurchaseComponent } from './components/purchase/purchase.component';
 import { HomeComponent } from './pages/home/home.component';
 import { SalesComponent } from './pages/sales/sales.component';
 import { OrdersComponent } from './pages/orders/orders.component';
+import { OrderDetailComponent } from './pages/orders/order-detail.component';
 import { TrackingComponent } from './pages/tracking/tracking.component';
+import { AdminComponent } from './pages/admin/admin.component';
 
 @NgModule({
   declarations: [
@@ -31,7 +34,9 @@ import { TrackingComponent } from './pages/tracking/tracking.component';
     HomeComponent,
     SalesComponent,
     OrdersComponent,
+    OrderDetailComponent,
     TrackingComponent,
+    AdminComponent,
   ],
   imports: [
     BrowserModule,
@@ -41,6 +46,7 @@ import { TrackingComponent } from './pages/tracking/tracking.component';
   ],
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideHttpClient(),
   ],
   bootstrap: [App],
 })
