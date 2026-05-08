@@ -82,6 +82,7 @@ export interface OrdenDetalleCompleta {
   notificaciones: Notificacion[];
   documentos: DocumentoOrden[];
   historial_estados: HistorialEstado[];
+  plan_pago: PlanPago | null;
   estado_orden: number;
   estado_orden_id: number;
 }
@@ -183,6 +184,29 @@ export interface HistorialEstado {
   estado_nuevo: string;
   fecha_cambio: string;
   responsable: string | null;
+  motivo_cambio?: string;
+}
+
+export interface CuotaPlan {
+  id: number;
+  numero_cuota: number;
+  monto_esperado: string;
+  fecha_vencimiento: string;
+  fecha_pago_real: string | null;
+  estado: string;
+  transaccion: number | null;
+}
+
+export interface PlanPago {
+  id: number;
+  tipo: string;
+  total_acordado: string;
+  cuotas_totales: number;
+  periodicidad: string | null;
+  fecha_inicio: string;
+  estado: string;
+  monto_por_cuota: number;
+  cuotas: CuotaPlan[];
 }
 
 interface ApiResponse<T> {
@@ -303,10 +327,12 @@ export class VentasService {
     return this.mapOrden(response.data);
   }
 
-  async updateOrderStatus(id: number, estadoOrden: number): Promise<OrdenVenta> {
+  async updateOrderStatus(id: number, estadoOrden: number, motivoCambio?: string): Promise<OrdenVenta> {
+    const body: Record<string, any> = { estado_orden: estadoOrden };
+    if (motivoCambio) body['motivo_cambio'] = motivoCambio;
     const res = await this.api.apiFetch(`/api/ventas/ordenes/${id}/`, {
       method: 'PATCH',
-      body: JSON.stringify({ estado_orden: estadoOrden }),
+      body: JSON.stringify(body),
     });
     const response: ApiResponse<OrdenVentaAPI> = await res.json();
     if (!res.ok || !response.success || !response.data) {

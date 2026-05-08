@@ -1,3 +1,4 @@
+import re
 from rest_framework import serializers
 from django.db import transaction
 from django.utils import timezone
@@ -16,6 +17,20 @@ from apps.clientes.models import Cliente
 from apps.vehiculos.models import VehiculoNuevo
 from apps.catalogos.models import CtEstadoOrden, CtEstadoPago
 from . import services
+
+# ─── Máquina de estados (mismo mapa que el frontend) ─────────────────────────
+TRANSICIONES_VALIDAS: dict[int, list[int]] = {
+    1: [2, 6],    # PENDIENTE → EN_PROCESO, CANCELADA
+    2: [3, 4, 6], # EN_PROCESO → APROBADA, RECHAZADA, CANCELADA
+    3: [5, 6],    # APROBADA → COMPLETADA, CANCELADA
+    4: [1],       # RECHAZADA → PENDIENTE
+    5: [],        # COMPLETADA (estado terminal)
+    6: [1],       # CANCELADA → PENDIENTE
+}
+
+# ─── Regex de validación ──────────────────────────────────────────────────────
+_PHONE_RE = re.compile(r'^\d{7,15}$')
+_IDENT_RE = re.compile(r'^\d{4,20}$')
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -91,17 +106,21 @@ class CuotaPlanSerializer(serializers.ModelSerializer):
 
 class PlanPagoSerializer(serializers.ModelSerializer):
     cuotas = CuotaPlanSerializer(many=True, read_only=True)
+    monto_por_cuota = serializers.SerializerMethodField()
 
     class Meta:
         model = PlanPago
         fields = [
             'id', 'tipo', 'total_acordado', 'cuotas_totales',
-            'periodicidad', 'fecha_inicio', 'estado', 'cuotas',
+            'periodicidad', 'fecha_inicio', 'estado', 'cuotas', 'monto_por_cuota',
         ]
+
+    def get_monto_por_cuota(self, obj):
+        return round(obj.monto_por_cuota, 2)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CREAR ORDEN DE VENTA (llama al service layer)
+# CREAR ORDEN DE VENTA
 # ─────────────────────────────────────────────────────────────────────────────
 
 class OrdenVentaCreateSerializer(serializers.Serializer):
@@ -140,6 +159,34 @@ class OrdenVentaCreateSerializer(serializers.Serializer):
     )
     notes = serializers.CharField(required=False, allow_blank=True, default='')
 
+    # ── Validadores numéricos ────────────────────────────────────────────────
+
+    def validate_phone1(self, value):
+        cleaned = re.sub(r'[\s\-().+]', '', value)
+        if not cleaned.isdigit() or not (7 <= len(cleaned) <= 15):
+            raise serializers.ValidationError(
+                'El teléfono debe contener solo dígitos (7–15 caracteres).'
+            )
+        return value
+
+    def validate_phone2(self, value):
+        if not value:
+            return value
+        cleaned = re.sub(r'[\s\-().+]', '', value)
+        if cleaned and (not cleaned.isdigit() or not (7 <= len(cleaned) <= 15)):
+            raise serializers.ValidationError(
+                'El teléfono 2 debe contener solo dígitos (7–15 caracteres).'
+            )
+        return value
+
+    def validate_identificacion(self, value):
+        cleaned = re.sub(r'[\s\-]', '', value)
+        if not cleaned.isdigit() or not (4 <= len(cleaned) <= 20):
+            raise serializers.ValidationError(
+                'La identificación debe contener solo dígitos (4–20 caracteres).'
+            )
+        return value
+
     def validate_reference_number(self, value):
         if TransaccionPago.objects.filter(referencia=value).exists():
             raise serializers.ValidationError(
@@ -161,6 +208,15 @@ class OrdenVentaCreateSerializer(serializers.Serializer):
                 f'Estado actual: {vehiculo.get_estado_comercial_display()}.'
             )
         return value
+
+    def validate(self, data):
+        monto_total = data.get('price', 0)
+        monto_inicial = data.get('monto_inicial', 0)
+        if monto_inicial and monto_total and float(monto_inicial) > float(monto_total):
+            raise serializers.ValidationError(
+                {'monto_inicial': 'El monto inicial no puede superar el precio total.'}
+            )
+        return data
 
     def create(self, validated_data):
         try:
@@ -195,19 +251,39 @@ class OrdenVentaCreateSerializer(serializers.Serializer):
 
 class OrdenVentaUpdateSerializer(serializers.Serializer):
     estado_orden = serializers.IntegerField()
+    motivo_cambio = serializers.CharField(required=False, allow_blank=True, default='')
 
     def validate_estado_orden(self, value):
         if not CtEstadoOrden.objects.filter(id=value).exists():
             raise serializers.ValidationError('Estado de orden inválido.')
         return value
 
+    def validate(self, data):
+        nuevo = data['estado_orden']
+        estado_actual = self.instance.estado_orden_id if self.instance else None
+        if estado_actual is not None:
+            permitidos = TRANSICIONES_VALIDAS.get(estado_actual, [])
+            if nuevo not in permitidos:
+                nombres = {1: 'Pendiente', 2: 'En Proceso', 3: 'Aprobada',
+                           4: 'Rechazada', 5: 'Completada', 6: 'Cancelada'}
+                raise serializers.ValidationError({
+                    'estado_orden': (
+                        f'Transición inválida: "{nombres.get(estado_actual, estado_actual)}" '
+                        f'→ "{nombres.get(nuevo, nuevo)}". '
+                        f'Estados permitidos: {[nombres.get(p, p) for p in permitidos] or ["ninguno (estado final)"]}'
+                    )
+                })
+        return data
+
     @transaction.atomic
     def update(self, instance, validated_data):
         estado_anterior = instance.estado_orden
-        instance.estado_orden_id = validated_data['estado_orden']
+        nuevo = validated_data['estado_orden']
+        motivo = validated_data.get('motivo_cambio', '')
+
+        instance.estado_orden_id = nuevo
 
         if instance.vehiculo:
-            nuevo = validated_data['estado_orden']
             if nuevo == 5:  # Completada → Vendido
                 instance.vehiculo.estado_comercial = VehiculoNuevo.ESTADO_COMERCIAL_VENDIDO
                 instance.vehiculo.save(update_fields=['estado_comercial'])
@@ -225,8 +301,9 @@ class OrdenVentaUpdateSerializer(serializers.Serializer):
         HistorialEstadosOrden.objects.create(
             orden=instance,
             estado_anterior=estado_anterior,
-            estado_nuevo_id=validated_data['estado_orden'],
+            estado_nuevo_id=nuevo,
             responsable=vendedor,
+            motivo_cambio=motivo or None,
         )
         return instance
 
@@ -417,8 +494,11 @@ class OrdenVentaDetalleSerializer(serializers.ModelSerializer):
         if not t:
             return None
         monto_total = float(t.monto) if t.monto else 0
+        # Monto pagado = inicial + suma de parciales APROBADOS/VERIFICADOS
         total_pagado = float(t.monto_inicial or 0) + sum(
-            float(p.monto_pagado or 0) for p in t.pagos_parciales.all()
+            float(p.monto_pagado or 0)
+            for p in t.pagos_parciales.all()
+            if p.estado_id in [2, 3]  # PAGADO o VERIFICADO
         )
         porcentaje = round(min((total_pagado / monto_total) * 100, 100), 2) if monto_total else 0
         return {
@@ -455,7 +535,7 @@ class OrdenVentaDetalleSerializer(serializers.ModelSerializer):
 
     def get_notificaciones(self, obj):
         return NotificacionSerializer(
-            obj.notificaciones.all().order_by('-fecha_envio')[:10], many=True
+            obj.notificaciones.all().order_by('-fecha_envio')[:20], many=True
         ).data
 
     def get_documentos(self, obj):
@@ -469,6 +549,7 @@ class OrdenVentaDetalleSerializer(serializers.ModelSerializer):
                 'estado_nuevo': h.estado_nuevo.estado_orden if h.estado_nuevo else None,
                 'fecha_cambio': h.fecha_cambio,
                 'responsable': h.responsable.nombre_completo if h.responsable else None,
+                'motivo_cambio': h.motivo_cambio,
             }
             for h in obj.historial_estados.all()
         ]

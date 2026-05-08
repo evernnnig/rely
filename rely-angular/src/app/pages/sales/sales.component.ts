@@ -596,8 +596,9 @@ private prepararDatosPDF(): any {
 
     this.formData.vehiculoId = this.vehiculoSeleccionado.id;
     
-    return this.validarCamposRequeridos() && 
-           this.validarMontos() && 
+    return this.validarCamposRequeridos() &&
+           this.validarCamposNumericos() &&
+           this.validarMontos() &&
            this.validarFormatoEmail() &&
            this.validarMetodoPago();
   }
@@ -628,6 +629,28 @@ private prepararDatosPDF(): any {
       }
     }
     
+    return true;
+  }
+
+  private validarCamposNumericos(): boolean {
+    const soloDigitos = (val: string) => /^\d+$/.test(val.replace(/[\s\-()+.]/g, ''));
+    const phone1 = (this.formData.phone1 || '').replace(/[\s\-()+.]/g, '');
+    if (!soloDigitos(this.formData.phone1 || '') || phone1.length < 7 || phone1.length > 15) {
+      this.error = 'El teléfono 1 debe contener solo dígitos (7–15 caracteres)';
+      return false;
+    }
+    if (this.formData.phone2) {
+      const phone2 = this.formData.phone2.replace(/[\s\-()+.]/g, '');
+      if (!soloDigitos(this.formData.phone2) || phone2.length < 7 || phone2.length > 15) {
+        this.error = 'El teléfono 2 debe contener solo dígitos (7–15 caracteres)';
+        return false;
+      }
+    }
+    const ident = (this.formData.identificacion || '').replace(/[\s\-]/g, '');
+    if (!soloDigitos(this.formData.identificacion || '') || ident.length < 4 || ident.length > 20) {
+      this.error = 'La identificación debe contener solo dígitos (4–20 caracteres)';
+      return false;
+    }
     return true;
   }
 

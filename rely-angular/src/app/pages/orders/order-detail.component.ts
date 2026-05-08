@@ -63,6 +63,7 @@ export class OrderDetailComponent implements OnInit {
   showDocumentoModal = false;
   showEstadoModal = false;
 
+  motivoCambio = '';
   notificacion = { tipo: 'email', asunto: '', mensaje: '' };
   pagoParcial = {
     numero_cuota: 1,
@@ -257,12 +258,13 @@ export class OrderDetailComponent implements OnInit {
     if (!this.orden) return;
     this.processingStates.cambiandoEstado = true;
     try {
-      await this.ventasService.updateOrderStatus(this.orden.id, nuevoEstado);
+      await this.ventasService.updateOrderStatus(this.orden.id, nuevoEstado, this.motivoCambio || undefined);
       if (this.orden) {
         this.orden.estado_orden = nuevoEstado;
         this.orden.estado_orden_id = nuevoEstado;
       }
       this.showEstadoModal = false;
+      this.motivoCambio = '';
       await this.cargarDetalle();
     } catch (err: any) {
       console.error('Error al cambiar estado:', err);

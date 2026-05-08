@@ -169,11 +169,16 @@ class HistorialEstadosOrden(models.Model):
         db_column='fecha_cambio'
     )
     responsable = models.ForeignKey(
-        'vendedores.Vendedor',  # Ahora sí existe la app vendedores
+        'vendedores.Vendedor',
         on_delete=models.PROTECT,
         null=True,
         db_column='responsable_id',
         related_name='cambios_estado'
+    )
+    motivo_cambio = models.TextField(
+        null=True,
+        blank=True,
+        db_column='motivo_cambio'
     )
 
     class Meta:

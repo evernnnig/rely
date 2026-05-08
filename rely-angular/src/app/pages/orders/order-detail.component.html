@@ -853,6 +853,9 @@
               <div *ngIf="h.responsable" class="text-xs text-gray-500 mt-1">
                 Cambio realizado por: <span class="text-gray-300">{{ h.responsable }}</span>
               </div>
+              <div *ngIf="h.motivo_cambio" class="mt-2 text-xs text-gray-400 bg-gray-900/40 rounded-lg px-3 py-2 italic">
+                "{{ h.motivo_cambio }}"
+              </div>
             </div>
           </div>
           <div *ngIf="historialFiltrado.length === 0" class="bg-gray-800/20 rounded-2xl border border-gray-700/50 p-16 text-center">
@@ -1122,7 +1125,7 @@
 </div>
 
 <!-- Cambiar Estado Orden Modal -->
-<div *ngIf="showEstadoModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" (click)="showEstadoModal = false">
+<div *ngIf="showEstadoModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" (click)="showEstadoModal = false; motivoCambio = ''">
   <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
   <div class="relative bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
     <div class="flex items-center justify-between px-6 py-5 border-b border-gray-800">
@@ -1130,7 +1133,7 @@
         <h2 class="text-white font-semibold text-lg">Cambiar Estado de Orden</h2>
         <p class="text-gray-500 text-sm mt-0.5">#{{ orden?.codigo_orden }}</p>
       </div>
-      <button (click)="showEstadoModal = false" class="text-gray-500 hover:text-white transition p-1.5 rounded-lg hover:bg-gray-800">
+      <button (click)="showEstadoModal = false; motivoCambio = ''" class="text-gray-500 hover:text-white transition p-1.5 rounded-lg hover:bg-gray-800">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
@@ -1142,6 +1145,11 @@
         <span [class]="'px-3 py-1 rounded-full text-sm font-semibold border ' + getEstadoOrdenClass()">
           {{ getEstadoOrdenLabel() }}
         </span>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Motivo del cambio <span class="text-gray-500 font-normal">(opcional)</span></label>
+        <textarea [(ngModel)]="motivoCambio" rows="2" placeholder="Ej: Cliente aprobó el financiamiento..."
+                  class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 resize-none"></textarea>
       </div>
       <div *ngIf="getEstadosDisponiblesParaCambio().length > 0; else sinEstadosDisponibles">
         <label class="block text-sm font-medium text-gray-300 mb-3">Seleccionar Nuevo Estado</label>
@@ -1175,7 +1183,7 @@
       </ng-template>
     </div>
     <div class="px-6 py-4 border-t border-gray-800">
-      <button (click)="showEstadoModal = false" [disabled]="processingStates.cambiandoEstado"
+      <button (click)="showEstadoModal = false; motivoCambio = ''" [disabled]="processingStates.cambiandoEstado"
               class="w-full py-3 text-sm text-gray-300 hover:text-white border border-gray-700 hover:border-gray-500 rounded-xl transition font-medium disabled:opacity-50">
         Cerrar
       </button>

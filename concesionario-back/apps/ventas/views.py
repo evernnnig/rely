@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.utils import timezone
+from django.core.mail import send_mail
+from django.conf import settings as django_settings
 
 from apps.catalogos.models import CtEstadoOrden
 from apps.clientes.models import Cliente
@@ -284,10 +286,22 @@ class EnviarNotificacionClienteView(APIView):
             vendedor = request.user.vendedor
         except Exception:
             vendedor = None
+        estado_envio = 'enviado'
+        if request.data.get('tipo', 'email') == 'email' and orden.cliente and orden.cliente.email:
+            try:
+                send_mail(
+                    subject=asunto,
+                    message=mensaje,
+                    from_email=django_settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[orden.cliente.email],
+                    fail_silently=False,
+                )
+            except Exception:
+                estado_envio = 'fallido'
         notificacion = NotificacionCliente.objects.create(
             orden=orden, tipo=request.data.get('tipo', 'email'),
             asunto=asunto, mensaje=mensaje,
-            enviado_por=vendedor, estado_envio='enviado',
+            enviado_por=vendedor, estado_envio=estado_envio,
         )
         return Response({'success': True, 'data': NotificacionSerializer(notificacion).data,
                          'message': 'Notificación enviada exitosamente'})
@@ -321,8 +335,10 @@ class RegistrarPagoParcialView(APIView):
             comprobante_url=request.data.get('comprobante_url', ''),
             notas=request.data.get('notas', ''),
         )
-        total_pagado = sum(float(p.monto_pagado) for p in transaccion.pagos_parciales.all())
-        transaccion.monto_restante = float(transaccion.monto) - total_pagado
+        total_pagado = float(transaccion.monto_inicial or 0) + sum(
+            float(p.monto_pagado or 0) for p in transaccion.pagos_parciales.filter(estado_id__in=[2, 3])
+        )
+        transaccion.monto_restante = max(0, float(transaccion.monto) - total_pagado)
         if transaccion.monto_restante <= 0:
             transaccion.monto_restante = 0
             transaccion.estado_pago_id = 2

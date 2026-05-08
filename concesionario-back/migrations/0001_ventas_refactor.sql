@@ -92,7 +92,13 @@ CREATE INDEX IF NOT EXISTS idx_cuota_plan_plan   ON cuota_plan(plan_id);
 CREATE INDEX IF NOT EXISTS idx_cuota_plan_estado ON cuota_plan(estado);
 
 -- ------------------------------------------------------------
--- 5. VERIFICACIÓN
+-- 5. CAMPO: motivo_cambio en historial_estados_orden
+-- ------------------------------------------------------------
+ALTER TABLE historial_estados_orden
+    ADD COLUMN IF NOT EXISTS motivo_cambio TEXT;
+
+-- ------------------------------------------------------------
+-- 6. VERIFICACIÓN
 -- ------------------------------------------------------------
 DO $$
 BEGIN
@@ -108,6 +114,9 @@ BEGIN
     ASSERT (SELECT COUNT(*) FROM information_schema.tables
             WHERE table_name='cuota_plan') = 1,
            'ERROR: tabla cuota_plan no creada';
+    ASSERT (SELECT COUNT(*) FROM information_schema.columns
+            WHERE table_name='historial_estados_orden' AND column_name='motivo_cambio') = 1,
+           'ERROR: columna motivo_cambio no creada en historial_estados_orden';
     RAISE NOTICE 'Migración verificada correctamente.';
 END $$;
 
