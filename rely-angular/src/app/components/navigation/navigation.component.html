@@ -41,6 +41,13 @@
           Órdenes
         </button>
         <button
+          *ngIf="canAccess('reservas')"
+          (click)="handleNavigation('reservas')"
+          [class]="currentView === 'reservas' ? 'text-orange-500' : 'text-gray-300 hover:text-white'"
+          class="transition-colors">
+          Reservas
+        </button>
+        <button
           *ngIf="canAccess('tracking')"
           (click)="handleNavigation('tracking')"
           [class]="currentView === 'tracking' ? 'text-orange-500' : 'text-gray-300 hover:text-white'"
@@ -100,6 +107,7 @@
 
       <button *ngIf="canAccess('sales')" (click)="handleNavigation('sales')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Ventas</button>
       <button *ngIf="canAccess('orders')" (click)="handleNavigation('orders')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Órdenes</button>
+      <button *ngIf="canAccess('reservas')" (click)="handleNavigation('reservas')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Reservas</button>
       <button *ngIf="canAccess('tracking')" (click)="handleNavigation('tracking')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Tracking</button>
       <button *ngIf="userRole === 'Administrador'" (click)="handleNavigation('admin')" class="block text-gray-300 hover:text-white py-2 w-full text-left">Administración</button>
 

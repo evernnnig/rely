@@ -30,6 +30,7 @@ export class App implements OnInit, OnDestroy {
         const url = (e as NavigationEnd).urlAfterRedirects;
         if (url.startsWith('/ventas')) this.currentView = 'sales';
         else if (url.startsWith('/ordenes')) this.currentView = 'orders';
+        else if (url.startsWith('/reservas')) this.currentView = 'reservas';
         else if (url.startsWith('/tracking')) this.currentView = 'tracking';
         else if (url.startsWith('/admin')) this.currentView = 'admin';
         else this.currentView = 'home';
@@ -39,6 +40,7 @@ export class App implements OnInit, OnDestroy {
     const url = this.router.url;
     if (url.startsWith('/ventas')) this.currentView = 'sales';
     else if (url.startsWith('/ordenes')) this.currentView = 'orders';
+    else if (url.startsWith('/reservas')) this.currentView = 'reservas';
     else if (url.startsWith('/tracking')) this.currentView = 'tracking';
     else if (url.startsWith('/admin')) this.currentView = 'admin';
     else this.currentView = 'home';
@@ -59,7 +61,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   handleViewChange(view: ViewType): void {
-    if (['sales', 'orders', 'tracking', 'admin'].includes(view) && !this.isAuth) {
+    if (['sales', 'orders', 'reservas', 'tracking', 'admin'].includes(view) && !this.isAuth) {
       this.isLoginOpen = true;
       return;
     }
@@ -67,6 +69,7 @@ export class App implements OnInit, OnDestroy {
       home: '/',
       sales: '/ventas',
       orders: '/ordenes',
+      reservas: '/reservas',
       tracking: '/tracking',
       admin: '/admin',
     };

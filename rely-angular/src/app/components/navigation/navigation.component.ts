@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type ViewType = 'home' | 'sales' | 'orders' | 'tracking' | 'admin';
+export type ViewType = 'home' | 'sales' | 'orders' | 'reservas' | 'tracking' | 'admin';
 
 @Component({
   standalone: false,
@@ -20,11 +20,12 @@ export class NavigationComponent {
 
   isOpen = false;
 
-  canAccess(view: 'sales' | 'orders' | 'tracking'): boolean {
+  canAccess(view: 'sales' | 'orders' | 'reservas' | 'tracking'): boolean {
     if (!this.isAuthenticated) return false;
     if (this.userRole === 'Administrador') return true;
     if (view === 'sales') return this.userRole === 'Vendedor';
     if (view === 'orders') return this.userRole === 'Gerente';
+    if (view === 'reservas') return this.userRole === 'Vendedor' || this.userRole === 'Gerente';
     if (view === 'tracking') return this.userRole === 'Vendedor' || this.userRole === 'Gerente';
     return false;
   }

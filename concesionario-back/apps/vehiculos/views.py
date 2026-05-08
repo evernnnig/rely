@@ -92,7 +92,12 @@ class VehiculoNuevoViewSet(viewsets.ModelViewSet):
         GET /api/vehiculos/inventario/reservables/
         """
         queryset = VehiculoNuevo.objects.filter(
-            estado__in=[1, 3, 4, 5]
+            estado__in=[1, 3, 4, 5],
+            # Excluir vehículos reservados/vendidos/no disponibles del conteo comercial
+            estado_comercial__in=[
+                VehiculoNuevo.ESTADO_COMERCIAL_DISPONIBLE,  # 1
+                VehiculoNuevo.ESTADO_COMERCIAL_MANTENIMIENTO,  # 5 (aún no vendido)
+            ]
         ).select_related(
             'version__modelo__marca',
             'ubicacion_fisica',

@@ -7,6 +7,7 @@ import { OrderDetailComponent } from './pages/orders/order-detail.component';
 import { TrackingComponent } from './pages/tracking/tracking.component';
 import { AdminComponent } from './pages/admin/admin.component';
 import { SedesComponent } from './pages/sedes/sedes.component';
+import { ReservasComponent } from './pages/reservas/reservas.component';
 import { RoleGuard } from './guards/role.guard';
 
 const routes: Routes = [
@@ -46,6 +47,12 @@ const routes: Routes = [
     component: SedesComponent,
     canActivate: [RoleGuard],
     data: { roles: ['Gerente'] },
+  },
+  {
+    path: 'reservas',
+    component: ReservasComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['Vendedor', 'Gerente'] },
   },
   { path: '**', redirectTo: '' },
 ];
