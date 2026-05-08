@@ -18,6 +18,15 @@ const ESTADO_ORDEN = {
   CANCELADA: 6
 } as const;
 
+const TRANSICIONES_ESTADO: Record<number, number[]> = {
+  [ESTADO_ORDEN.PENDIENTE]: [ESTADO_ORDEN.EN_PROCESO, ESTADO_ORDEN.CANCELADA],
+  [ESTADO_ORDEN.EN_PROCESO]: [ESTADO_ORDEN.APROBADA, ESTADO_ORDEN.RECHAZADA, ESTADO_ORDEN.CANCELADA],
+  [ESTADO_ORDEN.APROBADA]: [ESTADO_ORDEN.COMPLETADA, ESTADO_ORDEN.CANCELADA],
+  [ESTADO_ORDEN.RECHAZADA]: [ESTADO_ORDEN.PENDIENTE],
+  [ESTADO_ORDEN.COMPLETADA]: [],
+  [ESTADO_ORDEN.CANCELADA]: [ESTADO_ORDEN.PENDIENTE],
+};
+
 const METODOS_PAGO: Record<number, string> = {
   1: 'Efectivo',
   2: 'Transferencia',
@@ -126,18 +135,18 @@ export class OrdersComponent implements OnInit {
   openProcesar(): void {
     if (!this.selectedOrder) return;
     const estadoActual = this.selectedOrder.estadoId || ESTADO_ORDEN.PENDIENTE;
-    
-    // Diccionario de transiciones con tipo explícito
-    const transiciones: Record<number, number> = {
-      [ESTADO_ORDEN.PENDIENTE]: ESTADO_ORDEN.EN_PROCESO,
-      [ESTADO_ORDEN.EN_PROCESO]: ESTADO_ORDEN.APROBADA,
-      [ESTADO_ORDEN.APROBADA]: ESTADO_ORDEN.COMPLETADA,
-    };
-    
-    const siguienteEstado = transiciones[estadoActual] ?? ESTADO_ORDEN.APROBADA;
-    this.nuevoEstadoId = siguienteEstado;
+    const permitidos = TRANSICIONES_ESTADO[estadoActual] || [];
+    if (permitidos.length === 0) return; // estado terminal, no abrir modal
+    this.nuevoEstadoId = permitidos[0]; // pre-selecciona la primera transición válida
     this.procesarError = '';
     this.isProcesarOpen = true;
+  }
+
+  getEstadosParaCambio(): EstadoOpcion[] {
+    if (!this.selectedOrder) return [];
+    const estadoActual = this.selectedOrder.estadoId || ESTADO_ORDEN.PENDIENTE;
+    const permitidos = TRANSICIONES_ESTADO[estadoActual] || [];
+    return this.estadosDisponibles.filter(e => permitidos.includes(e.id));
   }
 
   closeProcesar(): void {

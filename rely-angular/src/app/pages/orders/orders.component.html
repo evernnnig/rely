@@ -328,7 +328,7 @@
     <!-- Footer del Modal -->
     <div class="px-6 py-4 border-t border-gray-800 flex gap-3">
       <button
-        *ngIf="selectedOrder && selectedOrder.estadoId !== 3 && selectedOrder.estadoId !== 4"
+        *ngIf="selectedOrder && getEstadosParaCambio().length > 0"
         (click)="openProcesar()"
         class="flex-1 bg-orange-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-orange-700 transition-colors">
         Procesar Orden
@@ -403,7 +403,7 @@
         <label class="block text-sm font-medium text-gray-300 mb-3">Cambiar estado a:</label>
         <div class="space-y-2">
           <label
-            *ngFor="let opcion of estadosDisponibles"
+            *ngFor="let opcion of getEstadosParaCambio()"
             [class]="'flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ' +
               (nuevoEstadoId === opcion.id
                 ? 'border-orange-500 bg-orange-600/10'

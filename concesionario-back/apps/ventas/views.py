@@ -160,6 +160,19 @@ class ReservaListCreateView(APIView):
         cliente_id = serializer.validated_data.get('cliente_id')
         if cliente_id:
             cliente = Cliente.objects.get(id=cliente_id)
+        else:
+            nombre = serializer.validated_data.get('cliente_nombre', '').strip()
+            apellido = serializer.validated_data.get('cliente_apellido', '').strip()
+            identificacion = serializer.validated_data.get('cliente_identificacion', '').strip()
+            telefono = serializer.validated_data.get('cliente_telefono', '').strip()
+            nombre_completo = f"{nombre} {apellido}".strip()
+            cliente, _ = Cliente.objects.update_or_create(
+                identificacion=identificacion,
+                defaults={
+                    'nombre_completo': nombre_completo,
+                    'telefono_1': telefono or None,
+                }
+            )
 
         try:
             reserva = services.crear_reserva(

@@ -71,7 +71,13 @@ export interface Reserva {
 
 export interface CreateReservaPayload {
   vehiculo_id: number;
+  // Opción A: cliente existente
   cliente_id?: number;
+  // Opción B: datos mínimos para crear cliente inline
+  cliente_nombre?: string;
+  cliente_apellido?: string;
+  cliente_identificacion?: string;
+  cliente_telefono?: string;
   dias?: number;
   monto_separacion?: number;
   notas?: string;

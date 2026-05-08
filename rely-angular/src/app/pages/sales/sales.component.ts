@@ -125,7 +125,15 @@ export class SalesComponent implements OnInit, OnDestroy {
 
   // Reserva
   tipoOperacion: 'comprar' | 'reservar' | null = null;
-  reservaForm = { dias: 7, monto_separacion: null as number | null, notas: '' };
+  reservaForm = {
+    dias: 7,
+    monto_separacion: null as number | null,
+    notas: '',
+    cliente_nombre: '',
+    cliente_apellido: '',
+    cliente_identificacion: '',
+    cliente_telefono: '',
+  };
   isReservando = false;
   reservaExitosa = false;
   reservaReferencia = '';
@@ -434,7 +442,7 @@ private prepararDatosPDF(): any {
     this.vehiculoSeleccionado = vehiculo;
     this.paso = 'seleccionado';
     this.tipoOperacion = null;
-    this.reservaForm = { dias: 7, monto_separacion: null, notas: '' };
+    this.reservaForm = { dias: 7, monto_separacion: null, notas: '', cliente_nombre: '', cliente_apellido: '', cliente_identificacion: '', cliente_telefono: '' };
     this.actualizarDatosUnidad(vehiculo);
     console.log('✅ Vehículo seleccionado - ID:', vehiculo.id);
     this.detectarCambios();
@@ -870,11 +878,25 @@ getNombreMetodoPago(id: string): string {
       this.error = 'Debe seleccionar un vehículo';
       return;
     }
+    const nombre = this.reservaForm.cliente_nombre.trim();
+    const identificacion = this.reservaForm.cliente_identificacion.trim();
+    if (!nombre) {
+      this.error = 'El nombre del cliente es obligatorio para la reserva';
+      return;
+    }
+    if (!identificacion) {
+      this.error = 'La identificación del cliente es obligatoria para la reserva';
+      return;
+    }
     this.isReservando = true;
     this.error = '';
     try {
       const payload: CreateReservaPayload = {
         vehiculo_id: this.vehiculoSeleccionado.id,
+        cliente_nombre: nombre,
+        cliente_apellido: this.reservaForm.cliente_apellido.trim() || undefined,
+        cliente_identificacion: identificacion,
+        cliente_telefono: this.reservaForm.cliente_telefono.trim() || undefined,
         dias: this.reservaForm.dias || 7,
         monto_separacion: this.reservaForm.monto_separacion || undefined,
         notas: this.reservaForm.notas || undefined,

@@ -73,7 +73,14 @@ class ReservaSerializer(serializers.ModelSerializer):
 
 class CreateReservaSerializer(serializers.Serializer):
     vehiculo_id = serializers.IntegerField()
+    # Opción A: ID de cliente existente
     cliente_id = serializers.IntegerField(required=False, allow_null=True)
+    # Opción B: datos mínimos para crear cliente inline
+    cliente_nombre = serializers.CharField(max_length=150, required=False, allow_blank=True, default='')
+    cliente_apellido = serializers.CharField(max_length=150, required=False, allow_blank=True, default='')
+    cliente_identificacion = serializers.CharField(max_length=50, required=False, allow_blank=True, default='')
+    cliente_telefono = serializers.CharField(max_length=20, required=False, allow_blank=True, default='')
+
     dias = serializers.IntegerField(default=7, min_value=1, max_value=90)
     monto_separacion = serializers.DecimalField(
         max_digits=12, decimal_places=2, required=False, allow_null=True
@@ -89,6 +96,17 @@ class CreateReservaSerializer(serializers.Serializer):
         if value and not Cliente.objects.filter(id=value).exists():
             raise serializers.ValidationError('Cliente no encontrado.')
         return value
+
+    def validate(self, data):
+        cliente_id = data.get('cliente_id')
+        nombre = data.get('cliente_nombre', '').strip()
+        identificacion = data.get('cliente_identificacion', '').strip()
+        if not cliente_id and not (nombre and identificacion):
+            raise serializers.ValidationError(
+                'Debe proporcionar un cliente_id existente '
+                'o los campos cliente_nombre + cliente_identificacion.'
+            )
+        return data
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -298,13 +316,22 @@ class OrdenVentaUpdateSerializer(serializers.Serializer):
         except Exception:
             vendedor = None
 
-        HistorialEstadosOrden.objects.create(
-            orden=instance,
-            estado_anterior=estado_anterior,
-            estado_nuevo_id=nuevo,
-            responsable=vendedor,
-            motivo_cambio=motivo or None,
-        )
+        try:
+            HistorialEstadosOrden.objects.create(
+                orden=instance,
+                estado_anterior=estado_anterior,
+                estado_nuevo_id=nuevo,
+                responsable=vendedor,
+                motivo_cambio=motivo or None,
+            )
+        except Exception:
+            # Fallback si la columna motivo_cambio aún no existe en la BD
+            HistorialEstadosOrden.objects.create(
+                orden=instance,
+                estado_anterior=estado_anterior,
+                estado_nuevo_id=nuevo,
+                responsable=vendedor,
+            )
         return instance
 
 
