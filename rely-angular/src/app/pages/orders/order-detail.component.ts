@@ -1,7 +1,7 @@
 // order-detail.component.ts
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { VentasService, OrdenDetalleCompleta, PagoParcial } from '../../services/orders.service';
+import { VentasService, OrdenDetalleCompleta, PagoParcial, Notificacion } from '../../services/orders.service';
 import { PdfVentaService, DatosVentaPDF } from '../../services/pdf-venta.service';
 
 type TabId = 'info' | 'pagos' | 'notificaciones' | 'documentos' | 'historial';
@@ -41,13 +41,11 @@ const TRANSICIONES_ESTADO: Record<number, number[]> = {
   [ESTADO_ORDEN.CANCELADA]: [ESTADO_ORDEN.PENDIENTE],
 };
 
-// Al inicio del archivo, después de los imports
 interface NotificacionConExpanded extends Notificacion {
   expanded?: boolean;
 }
 
-// En el componente, modifica el tipo de orden
-orden: (OrdenDetalleCompleta & { notificaciones: NotificacionConExpanded[] }) | null = null;
+type OrdenConNotificaciones = Omit<OrdenDetalleCompleta, 'notificaciones'> & { notificaciones: NotificacionConExpanded[] };
 
 @Component({
   standalone: false,
@@ -56,7 +54,7 @@ orden: (OrdenDetalleCompleta & { notificaciones: NotificacionConExpanded[] }) | 
 })
 export class OrderDetailComponent implements OnInit {
   ordenId!: number;
-  orden: OrdenDetalleCompleta | null = null;
+  orden: OrdenConNotificaciones | null = null;
   isLoading = true;
   error = '';
   activeTab: TabId = 'info';
