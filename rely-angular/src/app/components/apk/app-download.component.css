@@ -1,0 +1,70 @@
+/* Animaciones */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Efecto flotante en el mockup */
+.relative > .relative {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Animación de entrada */
+section {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Efecto de brillo en botón de descarga */
+.bg-orange-600 {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(249, 115, 22, 0.5);
+  }
+}
+
+/* Sombra personalizada */
+.shadow-2xl {
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .w-72 {
+    width: 16rem;
+  }
+  
+  .h-\[560px\] {
+    height: 480px;
+  }
+}
+
+/* Efecto hover en botón de descarga */
+button:active {
+  transform: scale(0.95) !important;
+}
+
+/* Transiciones suaves */
+button, a {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

@@ -1,5 +1,10 @@
+// services/orders.service.ts
 import { Injectable } from '@angular/core';
 import { ApiClientService } from './api-client.service';
+
+// ============================================================
+// INTERFACES
+// ============================================================
 
 export interface TransaccionPago {
   id: number;
@@ -60,14 +65,9 @@ export interface CreateOrdenPayload {
   notes?: string;
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  errors?: any;
-  detail?: string;
-  message?: string;
-  total?: number;
-}
+// ============================================================
+// INTERFACES PARA DETALLE COMPLETO
+// ============================================================
 
 export interface OrdenDetalleCompleta {
   id: number;
@@ -83,6 +83,7 @@ export interface OrdenDetalleCompleta {
   documentos: DocumentoOrden[];
   historial_estados: HistorialEstado[];
   estado_orden: number;
+  estado_orden_id: number;
 }
 
 export interface ClienteInfo {
@@ -93,6 +94,8 @@ export interface ClienteInfo {
   telefono_2: string;
   identificacion: string;
   direccion: string;
+  nacionalidad_id?: number;
+  estado_id?: number;
 }
 
 export interface VendedorInfo {
@@ -107,10 +110,12 @@ export interface VehiculoInfo {
   id: number;
   vin: string;
   color_exterior: string;
-  color_interior: string;
+  color_interior: string | null;
   numero_motor: string;
   numero_chasis: string;
   precio_lista: string;
+  estado_id: number;
+  ubicacion: string;
   version?: {
     nombre: string;
     motorizacion: string;
@@ -121,7 +126,6 @@ export interface VehiculoInfo {
     nombre: string;
     marca: string;
   };
-  ubicacion: string;
 }
 
 export interface TransaccionDetalle {
@@ -181,27 +185,89 @@ export interface HistorialEstado {
   responsable: string | null;
 }
 
-const ESTADO_LABELS: Record<number, string> = {
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  errors?: any;
+  detail?: string;
+  message?: string;
+  total?: number;
+}
+
+export interface EstadoOrden {
+  id: number;
+  nombre: string;
+}
+
+// ============================================================
+// CONSTANTES
+// ============================================================
+
+const ESTADO_ORDEN_LABELS: Record<number, string> = {
   1: 'Pendiente',
-  2: 'Aprobada',
-  3: 'Completada',
-  4: 'Cancelada',
+  2: 'En Proceso',
+  3: 'Aprobada',
+  4: 'Rechazada',
+  5: 'Completada',
+  6: 'Cancelada',
 };
+
+const ESTADO_PAGO_LABELS: Record<number, string> = {
+  1: 'Pendiente',
+  2: 'Pagado',
+  3: 'Verificado',
+};
+
+const METODO_PAGO_LABELS: Record<number, string> = {
+  1: 'Efectivo',
+  2: 'Transferencia Bancaria',
+  3: 'Financiamiento',
+  4: 'Tarjeta de Crédito',
+  5: 'Tarjeta de Débito',
+  6: 'Cheque',
+  7: 'Criptomoneda',
+  8: 'Otro',
+};
+
+// ============================================================
+// SERVICIO
+// ============================================================
 
 @Injectable({ providedIn: 'root' })
 export class VentasService {
   constructor(private api: ApiClientService) {}
 
-  private mapEstado(estado: number): string {
-    return ESTADO_LABELS[estado] || 'Pendiente';
+  // ──────────────────────────────────────────────
+  // HELPERS
+  // ──────────────────────────────────────────────
+
+  getEstadoOrdenLabel(estadoId: number): string {
+    return ESTADO_ORDEN_LABELS[estadoId] || 'Desconocido';
   }
+
+  getEstadoPagoLabel(estadoId: number): string {
+    return ESTADO_PAGO_LABELS[estadoId] || 'Desconocido';
+  }
+
+  getMetodoPagoLabel(metodoId: number): string {
+    return METODO_PAGO_LABELS[metodoId] || `Método ${metodoId}`;
+  }
+
+  async getEstadosOrden(): Promise<EstadoOrden[]> {
+    const res = await this.api.apiFetch('/api/ventas/estados-orden/');
+    const response: ApiResponse<EstadoOrden[]> = await res.json();
+    if (!res.ok || !response.success) {
+      throw new Error(response.detail || 'Error al cargar estados de orden');
+    }
+    return response.data || [];
+}
 
   private mapOrden(apiOrden: OrdenVentaAPI): OrdenVenta {
     return {
       id: apiOrden.id,
       referencia: apiOrden.codigo_orden,
       precio: apiOrden.precio_final_venta,
-      estado: this.mapEstado(apiOrden.estado_orden),
+      estado: ESTADO_ORDEN_LABELS[apiOrden.estado_orden] || 'Pendiente',
       estadoId: apiOrden.estado_orden,
       created_at: apiOrden.fecha_creacion,
       cliente_nombre: apiOrden.cliente_nombre,
@@ -215,79 +281,9 @@ export class VentasService {
     };
   }
 
-  // Agrega estos métodos al VentasService
-
-async getOrdenDetalleCompleta(id: number): Promise<OrdenDetalleCompleta> {
-  const res = await this.api.apiFetch(`/api/ventas/ordenes/${id}/completo/`);
-  const response: ApiResponse<OrdenDetalleCompleta> = await res.json();
-  if (!res.ok || !response.success || !response.data) {
-    throw new Error(response.detail || 'Error al cargar detalle de la orden');
-  }
-  return response.data;
-}
-
-async enviarNotificacion(ordenId: number, payload: {
-  tipo: string;
-  asunto: string;
-  mensaje: string;
-}): Promise<Notificacion> {
-  const res = await this.api.apiFetch(`/api/ventas/ordenes/${ordenId}/notificar/`, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-  const response = await res.json();
-  if (!res.ok || !response.success) {
-    throw new Error(response.detail || 'Error al enviar notificación');
-  }
-  return response.data;
-}
-
-async registrarPagoParcial(ordenId: number, payload: {
-  numero_cuota: number;
-  monto_pagado: number;
-  fecha_pago?: string;
-  fecha_vencimiento?: string;
-  comprobante_url?: string;
-  notas?: string;
-}): Promise<PagoParcial> {
-  const res = await this.api.apiFetch(`/api/ventas/ordenes/${ordenId}/pago-parcial/`, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-  const response = await res.json();
-  if (!res.ok || !response.success) {
-    throw new Error(response.detail || 'Error al registrar pago');
-  }
-  return response.data;
-}
-
-async subirDocumento(ordenId: number, payload: {
-  tipo_documento: string;
-  nombre: string;
-  url_archivo: string;
-}): Promise<DocumentoOrden> {
-  const res = await this.api.apiFetch(`/api/ventas/ordenes/${ordenId}/subir-documento/`, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-  const response = await res.json();
-  if (!res.ok || !response.success) {
-    throw new Error(response.detail || 'Error al subir documento');
-  }
-  return response.data;
-}
-
-async actualizarEstadoPago(ordenId: number, estadoPagoId: number): Promise<any> {
-  const res = await this.api.apiFetch(`/api/ventas/ordenes/${ordenId}/actualizar-estado-pago/`, {
-    method: 'PATCH',
-    body: JSON.stringify({ estado_pago_id: estadoPagoId }),
-  });
-  const response = await res.json();
-  if (!res.ok || !response.success) {
-    throw new Error(response.detail || 'Error al actualizar estado de pago');
-  }
-  return response;
-}
+  // ──────────────────────────────────────────────
+  // LISTA DE ÓRDENES
+  // ──────────────────────────────────────────────
 
   async getOrders(): Promise<OrdenVenta[]> {
     const res = await this.api.apiFetch('/api/ventas/ordenes/');
@@ -326,13 +322,112 @@ async actualizarEstadoPago(ordenId: number, estadoPagoId: number): Promise<any> 
     });
     const data = await res.json();
     if (!res.ok) {
-      const message =
-        data.reference_number?.[0] ||
+      const message = data.reference_number?.[0] ||
         data.non_field_errors?.[0] ||
         data.detail ||
         'Error al registrar la venta';
       throw new Error(message);
     }
     return data as OrdenVenta;
+  }
+
+  // ──────────────────────────────────────────────
+  // DETALLE COMPLETO
+  // ──────────────────────────────────────────────
+
+  async getOrdenDetalleCompleta(id: number): Promise<OrdenDetalleCompleta> {
+    const res = await this.api.apiFetch(`/api/ventas/ordenes/${id}/completo/`);
+    const response: ApiResponse<OrdenDetalleCompleta> = await res.json();
+    if (!res.ok || !response.success || !response.data) {
+      throw new Error(response.detail || 'Error al cargar detalle de la orden');
+    }
+    return response.data;
+  }
+
+  // ──────────────────────────────────────────────
+  // PAGOS PARCIALES
+  // ──────────────────────────────────────────────
+
+  async registrarPagoParcial(ordenId: number, payload: {
+    numero_cuota: number;
+    monto_pagado: number;
+    fecha_pago?: string;
+    fecha_vencimiento?: string;
+    comprobante_url?: string;
+    notas?: string;
+  }): Promise<PagoParcial> {
+    const res = await this.api.apiFetch(`/api/ventas/ordenes/${ordenId}/pago-parcial/`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    const response = await res.json();
+    if (!res.ok || !response.success) {
+      throw new Error(response.detail || 'Error al registrar pago');
+    }
+    return response.data;
+  }
+
+  async actualizarEstadoPagoIndividual(pagoId: number, estadoId: number): Promise<any> {
+    const res = await this.api.apiFetch(`/api/ventas/pagos/${pagoId}/estado/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ estado_id: estadoId }),
+    });
+    const response = await res.json();
+    if (!res.ok || !response.success) {
+      throw new Error(response.detail || 'Error al actualizar estado');
+    }
+    return response;
+  }
+
+  async actualizarEstadoPago(ordenId: number, estadoPagoId: number): Promise<any> {
+    const res = await this.api.apiFetch(`/api/ventas/ordenes/${ordenId}/actualizar-estado-pago/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ estado_pago_id: estadoPagoId }),
+    });
+    const response = await res.json();
+    if (!res.ok || !response.success) {
+      throw new Error(response.detail || 'Error al actualizar estado de pago');
+    }
+    return response;
+  }
+
+  // ──────────────────────────────────────────────
+  // NOTIFICACIONES
+  // ──────────────────────────────────────────────
+
+  async enviarNotificacion(ordenId: number, payload: {
+    tipo: string;
+    asunto: string;
+    mensaje: string;
+  }): Promise<Notificacion> {
+    const res = await this.api.apiFetch(`/api/ventas/ordenes/${ordenId}/notificar/`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    const response = await res.json();
+    if (!res.ok || !response.success) {
+      throw new Error(response.detail || 'Error al enviar notificación');
+    }
+    return response.data;
+  }
+
+  // ──────────────────────────────────────────────
+  // DOCUMENTOS
+  // ──────────────────────────────────────────────
+
+  async subirDocumento(ordenId: number, payload: {
+    tipo_documento: string;
+    nombre: string;
+    url_archivo: string;
+  }): Promise<DocumentoOrden> {
+    const res = await this.api.apiFetch(`/api/ventas/ordenes/${ordenId}/subir-documento/`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    const response = await res.json();
+    if (!res.ok || !response.success) {
+      throw new Error(response.detail || 'Error al subir documento');
+    }
+    return response.data;
   }
 }

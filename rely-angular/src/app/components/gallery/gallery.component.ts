@@ -1,4 +1,6 @@
-import { Component, HostListener } from '@angular/core';
+// import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, Output, EventEmitter } from '@angular/core';
+
 
 interface VehicleVersion {
   id: string;
@@ -30,6 +32,7 @@ interface GalleryImage {
   styleUrls: ['./gallery.component.css'],
 })
 export class GalleryComponent {
+  @Output() openReservation = new EventEmitter<string>();
   images: GalleryImage[] = [
     {
       src: '/photo_2026-03-24_07-09-28_(2).jpg',
@@ -111,6 +114,17 @@ export class GalleryComponent {
     if (this.lightboxIndex > 0) {
       this.lightboxIndex--;
     }
+  }
+
+  isReservationOpen = false;
+  selectedReservationVersion = '';
+
+  openReservationModal(version: string): void {
+    this.openReservation.emit(version);
+  }
+
+  onReservationCreated(): void {
+    console.log('Reserva creada exitosamente');
   }
 
   versions: VehicleVersion[] = [

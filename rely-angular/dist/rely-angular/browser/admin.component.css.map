@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/pages/admin/admin.component.css"],
+  "sourcesContent": ["@keyframes fade-in {\r\n  from { opacity: 0; transform: translateY(12px); }\r\n  to   { opacity: 1; transform: translateY(0); }\r\n}\r\n\r\n.animate-fade-in {\r\n  animation: fade-in 0.25s ease-out;\r\n}"],
+  "mappings": ";AAAA,WAAW;AACT;AAAO,aAAS;AAAG,eAAW,WAAW;AAAO;AAChD;AAAO,aAAS;AAAG,eAAW,WAAW;AAAI;AAC/C;AAEA,CAAC;AACC,aAAW,QAAQ,MAAM;AAC3B;",
+  "names": []
+}

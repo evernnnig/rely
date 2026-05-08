@@ -13,7 +13,9 @@ import { FeaturesComponent } from './components/features/features.component';
 import { GalleryComponent } from './components/gallery/gallery.component';
 import { ContactComponent } from './components/contact/contact.component';
 import { LoginComponent } from './components/login/login.component';
+import { AppDownloadComponent } from './components/apk/app-download.component';
 import { PurchaseComponent } from './components/purchase/purchase.component';
+import { PurchasePlanComponent } from './components/puchase-plan/purchase-plan.component';
 import { HomeComponent } from './pages/home/home.component';
 import { SalesComponent } from './pages/sales/sales.component';
 import { OrdersComponent } from './pages/orders/orders.component';
@@ -32,10 +34,12 @@ import { AdminComponent } from './pages/admin/admin.component';
     LoginComponent,
     PurchaseComponent,
     HomeComponent,
+    PurchasePlanComponent,
     SalesComponent,
     OrdersComponent,
     OrderDetailComponent,
     TrackingComponent,
+    AppDownloadComponent,
     AdminComponent,
   ],
   imports: [

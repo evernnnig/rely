@@ -1,0 +1,6 @@
+{ 
+  "appId": "com.rely.app", 
+  "appName": "Rely App", 
+  "webDir": "dist/rely-angular/browser", 
+  "bundledWebRuntime": false 
+} 

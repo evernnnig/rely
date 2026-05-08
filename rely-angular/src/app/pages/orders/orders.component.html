@@ -182,14 +182,23 @@
               <td class="p-4 hidden sm:table-cell">
                 <span class="text-gray-500 text-xs whitespace-nowrap">{{ formatDate(order.created_at) }}</span>
               </td>
+              <!-- En la sección de acciones de la tabla -->
               <td class="p-4">
                 <div class="flex items-center gap-2">
                   <button (click)="verDetalleCompleto(order); $event.stopPropagation()"
-                          class="px-3 py-1.5 bg-blue-600/20 text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-600/30 transition"
-                          title="Ver detalle completo">
+                          class="px-3 py-1.5 bg-blue-600/20 text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-600/30 transition">
                     Detalle
                   </button>
-                  <svg class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+                  <!-- Muestra un spinner si esta orden se está actualizando -->
+                  <div *ngIf="updatingOrderId === order.id" class="flex items-center justify-center w-6 h-6">
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="#f97316" stroke-width="4"/>
+                      <path class="opacity-75" fill="#f97316" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  </div>
+                  
+                  <svg *ngIf="updatingOrderId !== order.id" class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                   </svg>
                 </div>
