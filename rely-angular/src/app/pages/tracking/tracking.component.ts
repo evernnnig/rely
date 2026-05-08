@@ -1,69 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { LotesService, LoteImportacion, CtEstadoLote } from '../../services/lotes.service';
+import { SedesService, Sede } from '../../services/sedes.service';
+import { CatalogosService, Pais } from '../../services/catalogos.service';
+import { VehicleService, MarcaVehiculo, ModeloVehiculo, VersionVehiculo } from '../../services/vehiculos.service';
 
-export type TrackingStatus = 'manufacturing' | 'in_transit' | 'delivered' | 'delayed';
-
-export interface TrackingEvent {
-  id: string;
-  timestamp: string;
-  location: string;
-  status: string;
-  description: string;
+export interface VehiculoManifiesto {
+  version_id: number;
+  version_label: string;
+  vin: string;
+  color_exterior: string;
+  color_interior: string;
+  numero_motor: string;
+  numero_chasis: string;
+  precio_lista_sugerido: number | null;
 }
-
-export interface TrackingData {
-  id: string;
-  vehicleId: string;
-  customerName: string;
-  referenceNumber: string;
-  status: TrackingStatus;
-  currentLocation: string;
-  estimatedDelivery: string;
-  lastUpdate: string;
-  progress: number;
-  trackingHistory: TrackingEvent[];
-}
-
-export const statusConfig: Record<TrackingStatus, { label: string; colorClass: string; textClass: string }> = {
-  manufacturing: { label: 'En Manufactura', colorClass: 'bg-blue-600/20', textClass: 'text-blue-500' },
-  in_transit: { label: 'En Tránsito', colorClass: 'bg-yellow-600/20', textClass: 'text-yellow-500' },
-  delivered: { label: 'Entregado', colorClass: 'bg-green-600/20', textClass: 'text-green-500' },
-  delayed: { label: 'Retrasado', colorClass: 'bg-red-600/20', textClass: 'text-red-500' },
-};
-
-const mockData: TrackingData[] = [
-  {
-    id: '1', vehicleId: 'RELY-T60-2026-001', customerName: 'Juan Pérez',
-    referenceNumber: '123456789', status: 'in_transit',
-    currentLocation: 'Centro de Distribución - Ciudad de México',
-    estimatedDelivery: '2026-01-15', lastUpdate: '2026-01-10T14:30:00Z', progress: 75,
-    trackingHistory: [
-      { id: '1', timestamp: '2026-01-05T09:00:00Z', location: 'Planta de Manufactura', status: 'Fabricación Completada', description: 'Vehículo terminado y listo para envío' },
-      { id: '2', timestamp: '2026-01-07T11:30:00Z', location: 'Centro de Distribución', status: 'En Tránsito', description: 'Vehículo en camino al centro de distribución' },
-      { id: '3', timestamp: '2026-01-10T14:30:00Z', location: 'Centro de Distribución - CDMX', status: 'En Preparación', description: 'Preparando para entrega final' },
-    ],
-  },
-  {
-    id: '2', vehicleId: 'RELY-X7-2026-002', customerName: 'María González',
-    referenceNumber: '987654321', status: 'delivered',
-    currentLocation: 'Entregado - Guadalajara',
-    estimatedDelivery: '2026-01-08', lastUpdate: '2026-01-08T16:45:00Z', progress: 100,
-    trackingHistory: [
-      { id: '1', timestamp: '2026-01-01T08:00:00Z', location: 'Planta de Manufactura', status: 'Fabricación Completada', description: 'Vehículo terminado y listo para envío' },
-      { id: '2', timestamp: '2026-01-03T10:00:00Z', location: 'En Tránsito', status: 'Enviado', description: 'Vehículo en camino a destino final' },
-      { id: '3', timestamp: '2026-01-08T16:45:00Z', location: 'Guadalajara', status: 'Entregado', description: 'Vehículo entregado exitosamente al cliente' },
-    ],
-  },
-  {
-    id: '3', vehicleId: 'RELY-T80-2026-003', customerName: 'Carlos Rodríguez',
-    referenceNumber: '456789123', status: 'manufacturing',
-    currentLocation: 'Planta de Manufactura - Línea 2',
-    estimatedDelivery: '2026-01-25', lastUpdate: '2026-01-10T08:15:00Z', progress: 45,
-    trackingHistory: [
-      { id: '1', timestamp: '2026-01-08T07:00:00Z', location: 'Planta de Manufactura', status: 'Inicio de Producción', description: 'Comenzó el proceso de manufactura' },
-      { id: '2', timestamp: '2026-01-10T08:15:00Z', location: 'Planta de Manufactura - Línea 2', status: 'En Producción', description: 'Vehículo en proceso de ensamblaje' },
-    ],
-  },
-];
 
 @Component({
   standalone: false,
@@ -72,78 +22,408 @@ const mockData: TrackingData[] = [
   styleUrls: ['./tracking.component.css'],
 })
 export class TrackingComponent implements OnInit {
-  allData: TrackingData[] = mockData;
-  filteredData: TrackingData[] = [];
+  // ── Lista ──────────────────────────────────────────────────────
+  lotes: LoteImportacion[] = [];
+  filteredLotes: LoteImportacion[] = [];
+  estados: CtEstadoLote[] = [];
   searchTerm = '';
-  statusFilter = 'all';
-  selectedTracking: TrackingData | null = null;
-  isModalOpen = false;
+  estadoFiltro = 'all';
+  isLoading = false;
+  error = '';
 
-  statusConfig = statusConfig;
+  // ── Modal detalle ──────────────────────────────────────────────
+  selectedLote: LoteImportacion | null = null;
+  isDetailOpen = false;
+  detailTab: 'info' | 'vehiculos' = 'info';
 
-  statusOptions = [
-    { value: 'all', label: 'Todos' },
-    { value: 'manufacturing', label: 'Manufactura' },
-    { value: 'in_transit', label: 'En Tránsito' },
-    { value: 'delivered', label: 'Entregados' },
-    { value: 'delayed', label: 'Retrasados' },
+  // ── Avanzar estado ─────────────────────────────────────────────
+  isAvanzarOpen = false;
+  avanzarEstadoId: number | null = null;
+  avanzarNotas = '';
+  avanzarUbicacion = '';
+  isAvanzando = false;
+  avanzarError = '';
+
+  // ── Crear lote ─────────────────────────────────────────────────
+  isCrearOpen = false;
+  isCreando = false;
+  crearError = '';
+  catalogosLoading = false;
+  paises: Pais[] = [];
+  sedes: Sede[] = [];
+
+  loteForm = {
+    codigo_lote: '', proveedor: '', pais_origen: 0,
+    puerto_origen: '', puerto_destino: '', sede_destino: 0,
+    total_unidades: 1, fecha_orden_compra: '',
+    fecha_embarque_estimado: '', fecha_llegada_estimada: '',
+    numero_contenedores: null as number | null,
+    valor_fob_usd: null as number | null, notas: '',
+  };
+
+
+  // ── Catálogo de colores para manifiesto ───────────────────────
+  readonly coloresDisponibles = [
+    'Blanco', 'Blanco Perla', 'Blanco Polar',
+    'Negro', 'Negro Obsidiana', 'Negro Midnight',
+    'Gris', 'Gris Titanio', 'Gris Oscuro',
+    'Plata', 'Plata Metálico', 'Plata Hielo',
+    'Azul', 'Azul Océano', 'Azul Metálico', 'Azul Marino',
+    'Rojo', 'Rojo Carmesí', 'Rojo Metálico', 'Rojo Vino',
+    'Verde', 'Verde Oscuro', 'Verde Militar',
+    'Amarillo', 'Amarillo Oro',
+    'Naranja', 'Naranja Quemado',
+    'Marrón', 'Beige', 'Beige Arena',
+    'Dorado', 'Dorado Champagne',
+    'Bronce',
+    'Vino', 'Vino Tinto',
+    'Turquesa',
+    'Morado', 'Púrpura',
   ];
 
-  ngOnInit(): void {
-    this.applyFilters();
+  // ── Manifiesto de vehículos ────────────────────────────────────
+  isManifiestoOpen = false;
+  vehiculosManifiesto: VehiculoManifiesto[] = [];
+  marcas: MarcaVehiculo[] = [];
+  modelos: ModeloVehiculo[] = [];
+  versiones: VersionVehiculo[] = [];
+  isLoadingMarcas = false;
+  isLoadingModelos = false;
+  isLoadingVersiones = false;
+  isGuardando = false;
+  manifiestoError = '';
+  manifiestoSuccess = '';
+
+  vehiculoForm = {
+    marca_id: 0, modelo_id: 0, version_id: 0,
+    vin: '', color_exterior: '', color_interior: '',
+    numero_motor: '', numero_chasis: '',
+    precio_lista_sugerido: null as number | null,
+  };
+
+  constructor(
+    private lotesService: LotesService,
+    private sedesService: SedesService,
+    private catalogosService: CatalogosService,
+    private vehicleService: VehicleService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
+  ) {}
+
+  ngOnInit(): void { this.loadData(); }
+
+  // ── Carga principal ────────────────────────────────────────────
+  async loadData(): Promise<void> {
+    this.isLoading = true;
+    this.error = '';
+    try {
+      const [lotes, estados] = await Promise.all([
+        this.lotesService.getLotes(),
+        this.lotesService.getEstados(),
+      ]);
+      this.lotes = lotes;
+      this.estados = estados;
+      this.applyFilters();
+    } catch (e: any) {
+      this.error = e.message || 'Error al cargar lotes';
+    } finally {
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    }
   }
 
+  // ── Filtros ────────────────────────────────────────────────────
   applyFilters(): void {
-    let result = [...this.allData];
+    let r = [...this.lotes];
     if (this.searchTerm) {
       const t = this.searchTerm.toLowerCase();
-      result = result.filter(item =>
-        item.vehicleId.toLowerCase().includes(t) ||
-        item.customerName.toLowerCase().includes(t) ||
-        item.referenceNumber.includes(this.searchTerm)
+      r = r.filter(l =>
+        l.codigo_lote.toLowerCase().includes(t) ||
+        l.proveedor.toLowerCase().includes(t) ||
+        l.sede_destino_nombre.toLowerCase().includes(t) ||
+        (l.numero_bl || '').toLowerCase().includes(t)
       );
     }
-    if (this.statusFilter !== 'all') {
-      result = result.filter(item => item.status === this.statusFilter);
+    if (this.estadoFiltro !== 'all')
+      r = r.filter(l => l.estado_lote_nombre === this.estadoFiltro);
+    this.filteredLotes = r;
+  }
+
+  setEstadoFiltro(e: string): void { this.estadoFiltro = e; this.applyFilters(); }
+  onSearch(t: string): void { this.searchTerm = t; this.applyFilters(); }
+
+  // ── Detalle ────────────────────────────────────────────────────
+  async openDetail(lote: LoteImportacion): Promise<void> {
+    this.selectedLote = { ...lote, vehiculos: [] };
+    this.detailTab = 'info';
+    this.isDetailOpen = true;
+    this.closeAvanzar();
+    this.closeManifiesto();
+    try {
+      const detalle = await this.lotesService.getLoteById(lote.id);
+      this.selectedLote = detalle;
+      this.cdr.detectChanges();
+    } catch (e) {
+      this.cdr.detectChanges();
     }
-    this.filteredData = result;
   }
 
-  setStatusFilter(value: string): void {
-    this.statusFilter = value;
-    this.applyFilters();
+  closeDetail(): void {
+    this.isDetailOpen = false;
+    this.selectedLote = null;
+    this.closeAvanzar();
+    this.closeManifiesto();
   }
 
-  onSearch(term: string): void {
-    this.searchTerm = term;
-    this.applyFilters();
+  // ── Avanzar estado ─────────────────────────────────────────────
+  openAvanzar(): void {
+    this.avanzarEstadoId = null; this.avanzarNotas = '';
+    this.avanzarUbicacion = ''; this.avanzarError = '';
+    this.isAvanzarOpen = true;
+  }
+  closeAvanzar(): void { this.isAvanzarOpen = false; }
+
+  get estadosSiguientes(): CtEstadoLote[] {
+    if (!this.selectedLote) return [];
+    return this.estados.filter(e => e.orden > this.selectedLote!.estado_lote_orden);
   }
 
-  openModal(tracking: TrackingData): void {
-    this.selectedTracking = tracking;
-    this.isModalOpen = true;
+  async submitAvanzar(): Promise<void> {
+    if (!this.selectedLote || !this.avanzarEstadoId) return;
+    this.isAvanzando = true; this.avanzarError = '';
+    try {
+      const updated = await this.lotesService.avanzarEstado(
+        this.selectedLote.id, this.avanzarEstadoId, this.avanzarNotas, this.avanzarUbicacion,
+      );
+      const idx = this.lotes.findIndex(l => l.id === updated.id);
+      if (idx !== -1) this.lotes[idx] = updated;
+      this.selectedLote = updated;
+      this.applyFilters();
+      this.closeAvanzar();
+    } catch (e: any) {
+      this.avanzarError = e.message || 'Error al cambiar estado';
+    } finally {
+      this.isAvanzando = false; this.cdr.detectChanges();
+    }
   }
 
-  closeModal(): void {
-    this.isModalOpen = false;
-    this.selectedTracking = null;
+  // ── Crear lote ─────────────────────────────────────────────────
+  async openCrear(): Promise<void> {
+    this.resetLoteForm();
+    this.crearError = '';
+    this.isCrearOpen = true;
+    if (!this.paises.length || !this.sedes.length) {
+      this.catalogosLoading = true;
+      try {
+        const [p, s] = await Promise.all([
+          this.catalogosService.getPaises(),
+          this.sedesService.getSedes(true),
+        ]);
+        this.paises = p; this.sedes = s;
+      } catch {}
+      this.catalogosLoading = false;
+      this.cdr.detectChanges();
+    }
   }
 
-  getCount(status: string): number {
-    if (status === 'all') return this.allData.length;
-    return this.allData.filter(d => d.status === status).length;
+  closeCrear(): void { this.isCrearOpen = false; }
+
+  async submitCrear(): Promise<void> {
+    const f = this.loteForm;
+    if (!f.codigo_lote || !f.proveedor || !f.pais_origen ||
+        !f.puerto_origen || !f.puerto_destino || !f.sede_destino || !f.total_unidades) {
+      this.crearError = 'Completa todos los campos obligatorios.';
+      return;
+    }
+    this.isCreando = true; this.crearError = '';
+    try {
+      const payload: any = {
+        codigo_lote: f.codigo_lote, proveedor: f.proveedor,
+        pais_origen: f.pais_origen, puerto_origen: f.puerto_origen,
+        puerto_destino: f.puerto_destino, sede_destino: f.sede_destino,
+        total_unidades: f.total_unidades, notas: f.notas,
+      };
+      if (f.fecha_orden_compra) payload.fecha_orden_compra = f.fecha_orden_compra;
+      if (f.fecha_embarque_estimado) payload.fecha_embarque_estimado = f.fecha_embarque_estimado;
+      if (f.fecha_llegada_estimada) payload.fecha_llegada_estimada = f.fecha_llegada_estimada;
+      if (f.numero_contenedores) payload.numero_contenedores = f.numero_contenedores;
+      if (f.valor_fob_usd) payload.valor_fob_usd = f.valor_fob_usd;
+
+      const lote = await this.lotesService.createLote(payload);
+      this.lotes.unshift(lote);
+      this.applyFilters();
+      this.closeCrear();
+      this.openDetail(lote);
+    } catch (e: any) {
+      this.crearError = e.message || 'Error al crear lote';
+    } finally {
+      this.isCreando = false; this.cdr.detectChanges();
+    }
   }
 
-  formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('es-ES');
+  // ── Manifiesto de vehículos ────────────────────────────────────
+  async openManifiesto(): Promise<void> {
+    this.resetVehiculoForm();
+    this.vehiculosManifiesto = [];
+    this.manifiestoError = '';
+    this.manifiestoSuccess = '';
+    this.isManifiestoOpen = true;
+    if (!this.marcas.length) {
+      this.isLoadingMarcas = true;
+      try { this.marcas = await this.vehicleService.getMarcas(); } catch {}
+      this.isLoadingMarcas = false;
+      this.cdr.detectChanges();
+    }
   }
 
-  formatDateTime(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('es-ES') + ' ' +
-      new Date(dateStr).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  closeManifiesto(): void { this.isManifiestoOpen = false; }
+
+  async onMarcaChange(): Promise<void> {
+    this.vehiculoForm.modelo_id = 0; this.vehiculoForm.version_id = 0;
+    this.modelos = []; this.versiones = [];
+    if (!this.vehiculoForm.marca_id) return;
+    this.isLoadingModelos = true;
+    try { this.modelos = await this.vehicleService.getModelos(this.vehiculoForm.marca_id); } catch {}
+    this.isLoadingModelos = false; this.cdr.detectChanges();
   }
 
-  formatDateFull(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+  async onModeloChange(): Promise<void> {
+    this.vehiculoForm.version_id = 0; this.versiones = [];
+    if (!this.vehiculoForm.modelo_id) return;
+    this.isLoadingVersiones = true;
+    try { this.versiones = await this.vehicleService.getVersiones(this.vehiculoForm.modelo_id); } catch {}
+    this.isLoadingVersiones = false; this.cdr.detectChanges();
+  }
+
+  agregarVehiculo(): void {
+    const f = this.vehiculoForm;
+    this.manifiestoError = '';
+    if (!f.version_id || !f.vin.trim() || !f.color_exterior.trim()) {
+      this.manifiestoError = 'Versión, VIN y color exterior son obligatorios.'; return;
+    }
+    if (this.vehiculosManifiesto.some(v => v.vin === f.vin.trim())) {
+      this.manifiestoError = `VIN "${f.vin}" ya está en la lista.`; return;
+    }
+    const ver = this.versiones.find(v => v.id === f.version_id);
+    const label = ver
+      ? `${ver.modelo_detalle?.marca_detalle?.nombre || ''} ${ver.modelo_detalle?.nombre || ''} ${ver.nombre_version || ''}`.trim()
+      : `Versión ${f.version_id}`;
+
+    this.vehiculosManifiesto.push({
+      version_id: f.version_id, version_label: label,
+      vin: f.vin.trim(), color_exterior: f.color_exterior.trim(),
+      color_interior: f.color_interior.trim(), numero_motor: f.numero_motor.trim(),
+      numero_chasis: f.numero_chasis.trim(), precio_lista_sugerido: f.precio_lista_sugerido,
+    });
+    // Resetea solo los campos únicos por vehículo, mantiene marca/modelo/versión
+    this.vehiculoForm.vin = '';
+    this.vehiculoForm.color_exterior = '';
+    this.vehiculoForm.color_interior = '';
+    this.vehiculoForm.numero_motor = '';
+    this.vehiculoForm.numero_chasis = '';
+    this.vehiculoForm.precio_lista_sugerido = null;
+    this.cdr.detectChanges();
+  }
+
+  quitarVehiculo(i: number): void { this.vehiculosManifiesto.splice(i, 1); }
+
+  get vehiculosDelLote() {
+    return this.selectedLote?.vehiculos ?? [];
+  }
+
+  get slotsDisponibles(): number {
+    if (!this.selectedLote) return 0;
+    return this.selectedLote.total_unidades - this.selectedLote.unidades_registradas;
+  }
+
+  async guardarManifiesto(): Promise<void> {
+    if (!this.selectedLote || !this.vehiculosManifiesto.length) return;
+    if (this.vehiculosManifiesto.length > this.slotsDisponibles) {
+      this.manifiestoError = `Solo hay ${this.slotsDisponibles} slot(s) disponibles en este lote.`; return;
+    }
+    this.isGuardando = true; this.manifiestoError = ''; this.manifiestoSuccess = '';
+    try {
+      await this.lotesService.addVehiculos(
+        this.selectedLote.id,
+        this.vehiculosManifiesto.map(v => ({
+          version_id: v.version_id, vin: v.vin,
+          color_exterior: v.color_exterior, color_interior: v.color_interior,
+          numero_motor: v.numero_motor, numero_chasis: v.numero_chasis,
+          precio_lista_sugerido: v.precio_lista_sugerido,
+        })),
+      );
+      // Refresca el lote para ver unidades actualizadas
+      const updated = await this.lotesService.getLoteById(this.selectedLote.id);
+      this.ngZone.run(() => {
+        const idx = this.lotes.findIndex(l => l.id === updated.id);
+        if (idx !== -1) this.lotes[idx] = updated;
+        this.selectedLote = updated;
+        this.applyFilters();
+        this.manifiestoSuccess = `${this.vehiculosManifiesto.length} vehículo(s) registrado(s) correctamente.`;
+        this.vehiculosManifiesto = [];
+        this.resetVehiculoForm();
+      });
+    } catch (e: any) {
+      this.manifiestoError = e.message || 'Error al guardar vehículos';
+    } finally {
+      this.isGuardando = false; this.cdr.detectChanges();
+    }
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────
+  private resetLoteForm(): void {
+    this.loteForm = {
+      codigo_lote: '', proveedor: '', pais_origen: 0,
+      puerto_origen: '', puerto_destino: '', sede_destino: 0,
+      total_unidades: 1, fecha_orden_compra: '', fecha_embarque_estimado: '',
+      fecha_llegada_estimada: '', numero_contenedores: null, valor_fob_usd: null, notas: '',
+    };
+  }
+
+  private resetVehiculoForm(): void {
+    this.vehiculoForm = {
+      marca_id: 0, modelo_id: 0, version_id: 0,
+      vin: '', color_exterior: '', color_interior: '',
+      numero_motor: '', numero_chasis: '', precio_lista_sugerido: null,
+    };
+    this.modelos = []; this.versiones = [];
+  }
+
+  getCountByEstado(nombre: string): number {
+    if (nombre === 'all') return this.lotes.length;
+    return this.lotes.filter(l => l.estado_lote_nombre === nombre).length;
+  }
+
+  get lotesEnTransito(): number {
+    return this.lotes.filter(l =>
+      ['Embarcado','Tránsito Marítimo','En Puerto','Tránsito Nacional'].includes(l.estado_lote_nombre)
+    ).length;
+  }
+  get lotesEnAduana(): number { return this.lotes.filter(l => l.estado_lote_nombre === 'En Aduana').length; }
+  get lotesRecibidos(): number {
+    return this.lotes.filter(l => ['Recibido en Sede','Distribuido'].includes(l.estado_lote_nombre)).length;
+  }
+
+  formatDate(d: string | null): string {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('es-ES');
+  }
+  formatDateTime(d: string): string {
+    return new Date(d).toLocaleDateString('es-ES') + ' ' +
+      new Date(d).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  }
+  getEtaLabel(l: LoteImportacion): string {
+    if (l.fecha_llegada_real) return 'Llegó';
+    if (l.eta_dias === null) return '—';
+    if (l.eta_dias < 0) return `${Math.abs(l.eta_dias)}d retraso`;
+    if (l.eta_dias === 0) return 'Hoy';
+    return `${l.eta_dias}d restantes`;
+  }
+  getEtaColor(l: LoteImportacion): string {
+    if (l.fecha_llegada_real) return 'text-green-400';
+    if (l.eta_dias === null) return 'text-gray-400';
+    if (l.eta_dias < 0) return 'text-red-400';
+    if (l.eta_dias <= 7) return 'text-yellow-400';
+    return 'text-blue-400';
   }
 }

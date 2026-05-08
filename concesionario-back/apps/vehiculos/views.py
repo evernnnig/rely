@@ -84,3 +84,20 @@ class VehiculoNuevoViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='reservables')
+    def reservables(self, request):
+        """
+        Vehículos disponibles y pre-reservables (en tránsito/aduana/preparación).
+        GET /api/vehiculos/inventario/reservables/
+        """
+        queryset = VehiculoNuevo.objects.filter(
+            estado__in=[1, 3, 4, 5]
+        ).select_related(
+            'version__modelo__marca',
+            'ubicacion_fisica',
+            'estado',
+            'lote__estado_lote',
+        ).prefetch_related('version__equipamiento')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

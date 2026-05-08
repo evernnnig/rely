@@ -50,12 +50,29 @@ class VehiculoNuevoSerializer(serializers.ModelSerializer):
     ubicacion_detalle = CtEstadoVenezuelaSerializer(source='ubicacion_fisica', read_only=True)
     
     equipamiento = EquipamientoBaseSerializer(many=True, read_only=True)
+    lote_codigo = serializers.SerializerMethodField()
+    fecha_llegada_estimada = serializers.SerializerMethodField()
+    estado_lote_nombre = serializers.SerializerMethodField()
+
+    def get_lote_codigo(self, obj):
+        return obj.lote.codigo_lote if obj.lote else None
+
+    def get_fecha_llegada_estimada(self, obj):
+        if obj.lote and obj.lote.fecha_llegada_estimada:
+            return str(obj.lote.fecha_llegada_estimada)
+        return None
+
+    def get_estado_lote_nombre(self, obj):
+        if obj.lote and obj.lote.estado_lote:
+            return obj.lote.estado_lote.nombre
+        return None
 
     class Meta:
         model = VehiculoNuevo
         fields = [
-            'id', 'version', 'version_id', 'vin', 'numero_motor', 
-            'numero_chasis', 'color_exterior', 'color_interior', 
-            'fecha_llegada', 'ubicacion_fisica','ubicacion_detalle', 'precio_lista_sugerido', 
-            'estado', 'nombre_estado', 'equipamiento'
+            'id', 'version', 'version_id', 'vin', 'numero_motor',
+            'numero_chasis', 'color_exterior', 'color_interior',
+            'fecha_llegada', 'ubicacion_fisica', 'ubicacion_detalle', 'precio_lista_sugerido',
+            'estado', 'nombre_estado', 'equipamiento',
+            'lote_codigo', 'fecha_llegada_estimada', 'estado_lote_nombre',
         ]

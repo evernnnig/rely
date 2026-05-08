@@ -57,6 +57,8 @@ OWN_APPS = [
     'apps.auditoria',
     'apps.postventa',
     'apps.vendedores',
+    'apps.sedes',
+    'apps.lotes',
 ]
 
 INSTALLED_APPS = BASE_APPS + THIRD_APPS + OWN_APPS

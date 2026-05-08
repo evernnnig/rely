@@ -272,7 +272,7 @@ private prepararDatosPDF(): any {
   private async cargarInventario(): Promise<void> {
     this.cargandoInventario = true;
     try {
-      this.vehiculos = await this.vehicleService.getInventario();
+      this.vehiculos = await this.vehicleService.getInventarioReservable();
       this.agruparPorVersion();
       console.log('✅ Inventario cargado:', this.vehiculos.length, 'vehículos');
     } catch (err) {
@@ -507,6 +507,14 @@ private prepararDatosPDF(): any {
     const montoRestante = this.calcularMontoRestante();
     const cuotas = Math.max(1, parseInt(this.formData.numeroCuotas) || 1);
     return montoRestante > 0 ? montoRestante / cuotas : 0;
+  }
+
+  get esPreReservable(): boolean {
+    return !!this.vehiculoSeleccionado && [3, 4, 5].includes(this.vehiculoSeleccionado.estado);
+  }
+
+  get etiquetaAccion(): string {
+    return this.esPreReservable ? 'Pre-reservar Vehículo' : 'Registrar Venta';
   }
 
   get catalogosListos(): boolean {

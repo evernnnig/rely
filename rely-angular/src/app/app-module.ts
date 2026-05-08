@@ -22,6 +22,7 @@ import { OrdersComponent } from './pages/orders/orders.component';
 import { OrderDetailComponent } from './pages/orders/order-detail.component';
 import { TrackingComponent } from './pages/tracking/tracking.component';
 import { AdminComponent } from './pages/admin/admin.component';
+import { SedesComponent } from './pages/sedes/sedes.component';
 
 @NgModule({
   declarations: [
@@ -41,6 +42,7 @@ import { AdminComponent } from './pages/admin/admin.component';
     TrackingComponent,
     AppDownloadComponent,
     AdminComponent,
+    SedesComponent,
   ],
   imports: [
     BrowserModule,

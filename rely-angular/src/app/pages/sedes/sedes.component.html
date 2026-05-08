@@ -1,0 +1,176 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-900 to-black pt-24 px-4 pb-12">
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-white">Sedes</h1>
+        <p class="text-gray-400 mt-1">Gestión de sucursales y puntos de venta</p>
+      </div>
+      <button (click)="openCrear()"
+        class="flex items-center gap-2 bg-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-orange-700 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nueva Sede
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-5">
+        <p class="text-gray-400 text-sm mb-1">Total Sedes</p>
+        <p class="text-3xl font-bold text-white">{{ sedes.length }}</p>
+      </div>
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-5">
+        <p class="text-gray-400 text-sm mb-1">Sedes Activas</p>
+        <p class="text-3xl font-bold text-green-400">{{ sedesActivas }}</p>
+      </div>
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-5">
+        <p class="text-gray-400 text-sm mb-1">Total Vehículos</p>
+        <p class="text-3xl font-bold text-orange-400">{{ totalVehiculos }}</p>
+      </div>
+    </div>
+
+    <!-- Loading / Error -->
+    <div *ngIf="isLoading" class="flex justify-center py-20">
+      <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+    <div *ngIf="error && !isLoading" class="bg-red-900/30 border border-red-700 rounded-xl p-4 text-red-400 mb-6">
+      {{ error }}
+      <button (click)="loadSedes()" class="ml-4 underline">Reintentar</button>
+    </div>
+
+    <!-- Grid de sedes -->
+    <div *ngIf="!isLoading && !error">
+      <div *ngIf="sedes.length === 0" class="bg-gray-800/50 rounded-2xl border border-gray-700 py-16 text-center">
+        <svg class="mx-auto text-gray-600 mb-3" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <p class="text-gray-400">No hay sedes registradas</p>
+        <button (click)="openCrear()" class="mt-4 text-orange-400 underline text-sm">Crear primera sede</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div *ngFor="let sede of sedes"
+          class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 hover:border-gray-600 transition-colors">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-mono bg-gray-700 text-gray-300 px-2 py-0.5 rounded">{{ sede.codigo_sede }}</span>
+                <span [class]="sede.activa ? 'bg-green-900/50 text-green-400' : 'bg-gray-700 text-gray-400'"
+                  class="text-xs px-2 py-0.5 rounded-full">
+                  {{ sede.activa ? 'Activa' : 'Inactiva' }}
+                </span>
+              </div>
+              <h3 class="text-white font-bold text-lg">{{ sede.nombre }}</h3>
+              <p class="text-gray-400 text-sm">{{ sede.ciudad }}<span *ngIf="sede.estado_nombre"> · {{ sede.estado_nombre }}</span></p>
+            </div>
+            <div class="bg-orange-600/10 p-2.5 rounded-xl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+          </div>
+
+          <div class="space-y-2 text-sm mb-4">
+            <div class="flex items-start gap-2 text-gray-400">
+              <svg class="mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>{{ sede.direccion }}</span>
+            </div>
+            <div *ngIf="sede.telefono" class="flex items-center gap-2 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.95a16 16 0 0 0 6.29 6.29l.94-.94a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span>{{ sede.telefono }}</span>
+            </div>
+            <div *ngIf="sede.email" class="flex items-center gap-2 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span>{{ sede.email }}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+            <div class="flex items-center gap-1.5 text-gray-400 text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              <span>{{ sede.total_vehiculos }} vehículos</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button (click)="toggleActiva(sede)"
+                [class]="sede.activa ? 'text-yellow-400 hover:text-yellow-300' : 'text-green-400 hover:text-green-300'"
+                class="text-xs transition-colors">
+                {{ sede.activa ? 'Desactivar' : 'Activar' }}
+              </button>
+              <button (click)="openEditar(sede)"
+                class="px-3 py-1 bg-gray-700 text-gray-300 rounded-lg text-xs hover:bg-gray-600 transition-colors">
+                Editar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal formulario -->
+<div *ngIf="isFormOpen" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl border border-gray-700">
+    <div class="flex items-center justify-between p-6 border-b border-gray-700">
+      <h2 class="text-xl font-bold text-white">{{ editingId ? 'Editar Sede' : 'Nueva Sede' }}</h2>
+      <button (click)="closeForm()" class="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Código Sede *</label>
+          <input type="text" [(ngModel)]="form.codigo_sede" placeholder="SDE-001"
+            class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 text-sm uppercase" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Nombre *</label>
+          <input type="text" [(ngModel)]="form.nombre" placeholder="Sede Principal"
+            class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 text-sm" />
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Ciudad *</label>
+          <input type="text" [(ngModel)]="form.ciudad" placeholder="Caracas"
+            class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Teléfono</label>
+          <input type="text" [(ngModel)]="form.telefono" placeholder="0212-000-0000"
+            class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 text-sm" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-400 mb-1">Dirección *</label>
+        <input type="text" [(ngModel)]="form.direccion" placeholder="Av. Principal, Edificio..."
+          class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm text-gray-400 mb-1">Email</label>
+        <input type="email" [(ngModel)]="form.email" placeholder="sede@rely.com"
+          class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 text-sm" />
+      </div>
+      <div class="flex items-center gap-3">
+        <input type="checkbox" [(ngModel)]="form.activa" id="activa"
+          class="w-4 h-4 accent-orange-500 cursor-pointer" />
+        <label for="activa" class="text-sm text-gray-300 cursor-pointer">Sede activa</label>
+      </div>
+
+      <div *ngIf="formError" class="bg-red-900/20 border border-red-700 rounded-lg p-3 text-red-400 text-sm">
+        {{ formError }}
+      </div>
+    </div>
+
+    <div class="flex gap-3 p-6 border-t border-gray-700">
+      <button (click)="closeForm()" class="flex-1 bg-gray-700 text-gray-300 py-2.5 rounded-xl hover:bg-gray-600 transition-colors text-sm">
+        Cancelar
+      </button>
+      <button (click)="submitForm()" [disabled]="isSubmitting"
+        class="flex-1 bg-orange-600 text-white py-2.5 rounded-xl hover:bg-orange-700 transition-colors text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
+        <svg *ngIf="isSubmitting" class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        {{ isSubmitting ? 'Guardando...' : (editingId ? 'Actualizar' : 'Crear Sede') }}
+      </button>
+    </div>
+  </div>
+</div>

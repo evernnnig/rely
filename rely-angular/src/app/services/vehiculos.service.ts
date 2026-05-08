@@ -44,24 +44,54 @@ export interface VehiculoInventario {
   id: number;
   version: VersionVehiculo;
   vin: string;
-  numero_motor: string;
-  numero_chasis: string;
+  numero_motor: string | null;
+  numero_chasis: string | null;
   color_exterior: string;
   color_interior: string;
   fecha_llegada: string;
-  ubicacion_fisica: number;
+  ubicacion_fisica: number | null;
   ubicacion_detalle: {
     id: number;
     nombre: string;
-  };
-  precio_lista_sugerido: string;
+  } | null;
+  precio_lista_sugerido: string | null;
   estado: number;
   nombre_estado: string;
+  lote_codigo: string | null;
+  fecha_llegada_estimada: string | null;
+  estado_lote_nombre: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class VehicleService {
   constructor(private api: ApiClientService) {}
+
+  private parseList<T>(data: any): T[] {
+    if (Array.isArray(data)) return data;
+    if (data?.results) return data.results;
+    if (data?.data) return data.data;
+    return [];
+  }
+
+  async getMarcas(): Promise<MarcaVehiculo[]> {
+    const res = await this.api.apiFetch('/api/vehiculos/marcas/');
+    if (!res.ok) throw new Error('Error al cargar marcas');
+    return this.parseList<MarcaVehiculo>(await res.json());
+  }
+
+  async getModelos(marcaId?: number): Promise<ModeloVehiculo[]> {
+    const url = marcaId ? `/api/vehiculos/modelos/?marca=${marcaId}` : '/api/vehiculos/modelos/';
+    const res = await this.api.apiFetch(url);
+    if (!res.ok) throw new Error('Error al cargar modelos');
+    return this.parseList<ModeloVehiculo>(await res.json());
+  }
+
+  async getVersiones(modeloId?: number): Promise<VersionVehiculo[]> {
+    const url = modeloId ? `/api/vehiculos/versiones/?modelo=${modeloId}` : '/api/vehiculos/versiones/';
+    const res = await this.api.apiFetch(url);
+    if (!res.ok) throw new Error('Error al cargar versiones');
+    return this.parseList<VersionVehiculo>(await res.json());
+  }
 
   async getInventario(): Promise<VehiculoInventario[]> {
     const res = await this.api.apiFetch('/api/vehiculos/inventario/');
@@ -73,5 +103,11 @@ export class VehicleService {
     const res = await this.api.apiFetch(`/api/vehiculos/inventario/${id}/`);
     if (!res.ok) throw new Error('Error al cargar el vehículo');
     return res.json() as Promise<VehiculoInventario>;
+  }
+
+  async getInventarioReservable(): Promise<VehiculoInventario[]> {
+    const res = await this.api.apiFetch('/api/vehiculos/inventario/reservables/');
+    if (!res.ok) throw new Error('Error al cargar el inventario');
+    return res.json() as Promise<VehiculoInventario[]>;
   }
 }

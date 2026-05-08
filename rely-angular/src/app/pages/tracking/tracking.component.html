@@ -1,208 +1,672 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-900 to-black pt-24 px-4">
+<div class="min-h-screen bg-gradient-to-br from-gray-900 to-black pt-24 px-4 pb-12">
   <div class="max-w-7xl mx-auto">
-    <div class="text-center mb-8">
-      <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Tracking de Vehículos</h1>
-      <p class="text-xl text-gray-400">Monitorea el estado y ubicación de todos los vehículos</p>
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-white">Tracking de Lotes</h1>
+        <p class="text-gray-400 mt-1">Seguimiento de importaciones desde China hasta Venezuela</p>
+      </div>
+      <button (click)="openCrear()"
+        class="flex items-center gap-2 bg-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-orange-700 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuevo Lote
+      </button>
     </div>
 
-    <!-- Filtros y búsqueda -->
-    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 mb-8">
+    <!-- Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-5">
+        <p class="text-gray-400 text-sm mb-1">Total Lotes</p>
+        <p class="text-3xl font-bold text-white">{{ lotes.length }}</p>
+      </div>
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-5">
+        <p class="text-gray-400 text-sm mb-1">En Tránsito</p>
+        <p class="text-3xl font-bold text-blue-400">{{ lotesEnTransito }}</p>
+      </div>
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-5">
+        <p class="text-gray-400 text-sm mb-1">En Aduana</p>
+        <p class="text-3xl font-bold text-orange-400">{{ lotesEnAduana }}</p>
+      </div>
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-5">
+        <p class="text-gray-400 text-sm mb-1">Recibidos</p>
+        <p class="text-3xl font-bold text-green-400">{{ lotesRecibidos }}</p>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-5 mb-6">
       <div class="flex flex-col lg:flex-row gap-4">
         <div class="flex-1 relative">
-          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" placeholder="Buscar por ID de vehículo, cliente o referencia..."
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Buscar por código, proveedor, sede, BL..."
             [value]="searchTerm" (input)="onSearch($any($event.target).value)"
-            class="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" />
+            class="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors text-sm" />
         </div>
-        <div class="flex gap-3 flex-wrap">
-          <button *ngFor="let opt of statusOptions" (click)="setStatusFilter(opt.value)"
-            [class]="statusFilter === opt.value ? 'bg-orange-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'"
-            class="px-4 py-3 rounded-lg font-medium transition-colors">
-            {{ opt.label }} ({{ getCount(opt.value) }})
+        <div class="flex gap-2 flex-wrap">
+          <button (click)="setEstadoFiltro('all')"
+            [class]="estadoFiltro === 'all' ? 'bg-orange-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'"
+            class="px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+            Todos ({{ lotes.length }})
+          </button>
+          <button *ngFor="let e of estados" (click)="setEstadoFiltro(e.nombre)"
+            [style.backgroundColor]="estadoFiltro === e.nombre ? e.color_hex : ''"
+            [class]="estadoFiltro === e.nombre ? 'text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'"
+            class="px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+            {{ e.nombre }} ({{ getCountByEstado(e.nombre) }})
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
-        <div class="flex items-center gap-3">
-          <div class="bg-blue-600/20 p-3 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-          </div>
-          <div><p class="text-gray-400 text-sm">En Manufactura</p><p class="text-2xl font-bold text-white">{{ getCount('manufacturing') }}</p></div>
-        </div>
-      </div>
-      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
-        <div class="flex items-center gap-3">
-          <div class="bg-yellow-600/20 p-3 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          </div>
-          <div><p class="text-gray-400 text-sm">En Tránsito</p><p class="text-2xl font-bold text-white">{{ getCount('in_transit') }}</p></div>
-        </div>
-      </div>
-      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
-        <div class="flex items-center gap-3">
-          <div class="bg-green-600/20 p-3 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          </div>
-          <div><p class="text-gray-400 text-sm">Entregados</p><p class="text-2xl font-bold text-white">{{ getCount('delivered') }}</p></div>
-        </div>
-      </div>
-      <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
-        <div class="flex items-center gap-3">
-          <div class="bg-orange-600/20 p-3 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
-          </div>
-          <div><p class="text-gray-400 text-sm">Total Activos</p><p class="text-2xl font-bold text-white">{{ getCount('all') }}</p></div>
-        </div>
-      </div>
+    <!-- Loading / Error -->
+    <div *ngIf="isLoading" class="flex justify-center py-20">
+      <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
-    <!-- Grid de cards -->
-    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 overflow-hidden">
-      <div class="p-6 border-b border-gray-700">
-        <h3 class="text-xl font-bold text-white">Vehículos en Seguimiento ({{ filteredData.length }})</h3>
+    <div *ngIf="error && !isLoading" class="bg-red-900/30 border border-red-700 rounded-xl p-4 text-red-400 mb-6">
+      {{ error }}
+      <button (click)="loadData()" class="ml-4 underline">Reintentar</button>
+    </div>
+
+    <!-- Tabla -->
+    <div *ngIf="!isLoading && !error" class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 overflow-hidden">
+      <div class="p-5 border-b border-gray-700">
+        <h3 class="text-lg font-bold text-white">Lotes de Importación ({{ filteredLotes.length }})</h3>
       </div>
 
-      <div *ngIf="filteredData.length === 0" class="p-12 text-center">
-        <svg class="mx-auto text-gray-600 mb-4" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <p class="text-gray-400">No se encontraron vehículos</p>
+      <div *ngIf="filteredLotes.length === 0" class="py-16 text-center">
+        <svg class="mx-auto text-gray-600 mb-3" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        <p class="text-gray-400">No se encontraron lotes</p>
+        <button (click)="openCrear()" class="mt-3 text-orange-400 underline text-sm">Crear primer lote</button>
       </div>
 
-      <div *ngIf="filteredData.length > 0" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 p-6">
-        <div *ngFor="let tracking of filteredData"
-          (click)="openModal(tracking)"
-          class="bg-gray-900/50 rounded-xl border border-gray-700 p-6 hover:border-orange-600 transition-all cursor-pointer">
-          <div class="flex justify-between items-start mb-4">
-            <div>
-              <h4 class="text-white font-bold text-lg mb-1">{{ tracking.vehicleId }}</h4>
-              <p class="text-gray-400">{{ tracking.customerName }}</p>
-            </div>
-            <span [class]="statusConfig[tracking.status].colorClass + ' ' + statusConfig[tracking.status].textClass" class="px-2 py-1 rounded-full text-xs font-medium">
-              {{ statusConfig[tracking.status].label }}
-            </span>
-          </div>
-          <div class="space-y-3">
-            <div class="flex items-center gap-2 text-gray-400 text-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <span class="truncate">{{ tracking.currentLocation }}</span>
-            </div>
-            <div class="flex items-center gap-2 text-gray-400 text-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              Entrega: {{ formatDate(tracking.estimatedDelivery) }}
-            </div>
-            <div class="space-y-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-400">Progreso</span>
-                <span class="text-white">{{ tracking.progress }}%</span>
-              </div>
-              <div class="w-full bg-gray-700 rounded-full h-2">
-                <div class="bg-orange-500 h-2 rounded-full transition-all duration-300" [style.width.%]="tracking.progress"></div>
-              </div>
-            </div>
-          </div>
-          <div class="mt-4 pt-4 border-t border-gray-700">
-            <p class="text-xs text-gray-500">Ref: {{ tracking.referenceNumber }}</p>
-          </div>
-        </div>
+      <div *ngIf="filteredLotes.length > 0" class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-gray-700">
+              <th class="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Código / Proveedor</th>
+              <th class="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Estado</th>
+              <th class="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Sede Destino</th>
+              <th class="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Unidades</th>
+              <th class="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">ETA</th>
+              <th class="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Progreso</th>
+              <th class="px-5 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let lote of filteredLotes" class="border-b border-gray-700/50 hover:bg-gray-700/20 transition-colors">
+              <td class="px-5 py-4">
+                <p class="text-white font-mono font-semibold">{{ lote.codigo_lote }}</p>
+                <p class="text-gray-400 text-sm">{{ lote.proveedor }}</p>
+              </td>
+              <td class="px-5 py-4">
+                <span class="px-2.5 py-1 rounded-full text-xs font-semibold text-white"
+                  [style.backgroundColor]="lote.estado_lote_color">{{ lote.estado_lote_nombre }}</span>
+              </td>
+              <td class="px-5 py-4">
+                <p class="text-white text-sm">{{ lote.sede_destino_nombre }}</p>
+                <p class="text-gray-400 text-xs">{{ lote.sede_destino_ciudad }}</p>
+              </td>
+              <td class="px-5 py-4">
+                <p class="text-white text-sm">{{ lote.unidades_registradas }}/{{ lote.total_unidades }}</p>
+                <p class="text-gray-400 text-xs">{{ lote.unidades_disponibles }} disponibles</p>
+              </td>
+              <td class="px-5 py-4">
+                <span [class]="getEtaColor(lote)" class="text-sm font-medium">{{ getEtaLabel(lote) }}</span>
+                <p class="text-gray-400 text-xs">{{ formatDate(lote.fecha_llegada_estimada) }}</p>
+              </td>
+              <td class="px-5 py-4 w-32">
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 bg-gray-700 rounded-full h-1.5">
+                    <div class="h-1.5 rounded-full transition-all"
+                      [style.width.%]="(lote.estado_lote_orden / 10) * 100"
+                      [style.backgroundColor]="lote.estado_lote_color"></div>
+                  </div>
+                  <span class="text-xs text-gray-400">{{ lote.estado_lote_orden }}/10</span>
+                </div>
+              </td>
+              <td class="px-5 py-4">
+                <button (click)="openDetail(lote)"
+                  class="px-3 py-1.5 bg-orange-600/20 text-orange-400 border border-orange-600/30 rounded-lg text-sm hover:bg-orange-600 hover:text-white transition-colors">
+                  Ver detalle
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal de detalles -->
-<div *ngIf="isModalOpen && selectedTracking" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-  <div class="bg-gray-900 rounded-2xl w-full max-w-4xl shadow-2xl border border-gray-700 max-h-[90vh] overflow-y-auto">
-    <div class="flex justify-between items-center p-6 border-b border-gray-700">
-      <h2 class="text-2xl font-bold text-white">Detalles de Tracking</h2>
-      <button (click)="closeModal()" class="p-2 hover:bg-gray-800 rounded-lg transition-colors">
-        <span class="text-gray-400 text-xl">×</span>
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: CREAR LOTE
+════════════════════════════════════════════════════════════════ -->
+<div *ngIf="isCrearOpen" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gray-900 rounded-2xl w-full max-w-3xl shadow-2xl border border-gray-700 max-h-[94vh] flex flex-col">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-700 flex-shrink-0">
+      <div>
+        <h2 class="text-xl font-bold text-white">Nuevo Lote de Importación</h2>
+        <p class="text-gray-400 text-sm mt-0.5">Registra la información logística del embarque</p>
+      </div>
+      <button (click)="closeCrear()" class="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <div class="p-6">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div class="space-y-6">
+
+    <!-- Body -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <div *ngIf="catalogosLoading" class="flex justify-center py-10">
+        <div class="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+
+      <div *ngIf="!catalogosLoading" class="space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <h3 class="text-xl font-bold text-white mb-4">Información del Vehículo</h3>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-400 mb-1">ID del Vehículo</label>
-                <p class="text-white font-mono">{{ selectedTracking.vehicleId }}</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-400 mb-1">Cliente</label>
-                <p class="text-white">{{ selectedTracking.customerName }}</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-400 mb-1">Número de Referencia</label>
-                <p class="text-orange-500 font-mono">{{ selectedTracking.referenceNumber }}</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-400 mb-1">Estado Actual</label>
-                <span [class]="statusConfig[selectedTracking.status].colorClass + ' ' + statusConfig[selectedTracking.status].textClass" class="px-3 py-1 rounded-full text-sm font-medium">
-                  {{ statusConfig[selectedTracking.status].label }}
-                </span>
-              </div>
-            </div>
+            <label class="block text-sm text-gray-400 mb-1.5">Código del Lote *</label>
+            <input type="text" [(ngModel)]="loteForm.codigo_lote" placeholder="LOT-2026-001" class="input-field" />
           </div>
           <div>
-            <h3 class="text-xl font-bold text-white mb-4">Ubicación y Entrega</h3>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-400 mb-1">Ubicación Actual</label>
-                <p class="text-white">{{ selectedTracking.currentLocation }}</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-400 mb-1">Entrega Estimada</label>
-                <p class="text-white">{{ formatDateFull(selectedTracking.estimatedDelivery) }}</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-400 mb-1">Progreso</label>
-                <div class="space-y-2">
-                  <div class="flex justify-between text-sm">
-                    <span class="text-gray-400">Completado</span>
-                    <span class="text-white">{{ selectedTracking.progress }}%</span>
-                  </div>
-                  <div class="w-full bg-gray-700 rounded-full h-2">
-                    <div class="bg-orange-500 h-2 rounded-full transition-all duration-300" [style.width.%]="selectedTracking.progress"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <label class="block text-sm text-gray-400 mb-1.5">Proveedor *</label>
+            <input type="text" [(ngModel)]="loteForm.proveedor" placeholder="Chery Automobile Co." class="input-field" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-1.5">País de Origen *</label>
+            <select [(ngModel)]="loteForm.pais_origen" class="input-field">
+              <option [value]="0" disabled>Seleccionar...</option>
+              <option *ngFor="let p of paises" [value]="p.id">{{ p.nombre }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1.5">Puerto Origen *</label>
+            <input type="text" [(ngModel)]="loteForm.puerto_origen" placeholder="Puerto de Shanghái" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1.5">Puerto Destino *</label>
+            <input type="text" [(ngModel)]="loteForm.puerto_destino" placeholder="Puerto de La Guaira" class="input-field" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-1.5">Sede Destino *</label>
+            <select [(ngModel)]="loteForm.sede_destino" class="input-field">
+              <option [value]="0" disabled>Seleccionar sede...</option>
+              <option *ngFor="let s of sedes" [value]="s.id">{{ s.nombre }} — {{ s.ciudad }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1.5">Total de Unidades *</label>
+            <input type="number" [(ngModel)]="loteForm.total_unidades" min="1" class="input-field" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-1.5">Fecha Orden de Compra</label>
+            <input type="date" [(ngModel)]="loteForm.fecha_orden_compra" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1.5">Embarque Estimado</label>
+            <input type="date" [(ngModel)]="loteForm.fecha_embarque_estimado" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1.5">Llegada Estimada</label>
+            <input type="date" [(ngModel)]="loteForm.fecha_llegada_estimada" class="input-field" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-1.5">Número de Contenedores</label>
+            <input type="number" [(ngModel)]="loteForm.numero_contenedores" min="1" placeholder="4" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1.5">Valor FOB (USD)</label>
+            <input type="number" [(ngModel)]="loteForm.valor_fob_usd" min="0" step="0.01" placeholder="0.00" class="input-field" />
           </div>
         </div>
 
         <div>
-          <h3 class="text-xl font-bold text-white mb-4">Historial de Tracking</h3>
-          <div class="space-y-4">
-            <div *ngFor="let event of selectedTracking.trackingHistory; let i = index; let last = last" class="relative">
-              <div *ngIf="!last" class="absolute left-4 top-8 w-0.5 h-16 bg-gray-700"></div>
-              <div class="flex gap-4">
-                <div class="bg-orange-600/20 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
-                  <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+          <label class="block text-sm text-gray-400 mb-1.5">Notas</label>
+          <textarea [(ngModel)]="loteForm.notas" rows="3" placeholder="Observaciones adicionales..."
+            class="input-field resize-none"></textarea>
+        </div>
+
+        <div *ngIf="crearError" class="bg-red-900/20 border border-red-700 rounded-lg p-3 text-red-400 text-sm">
+          {{ crearError }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="p-6 border-t border-gray-700 flex-shrink-0 flex gap-3">
+      <button (click)="closeCrear()" class="flex-1 bg-gray-700 text-gray-300 py-2.5 rounded-xl hover:bg-gray-600 transition-colors text-sm">
+        Cancelar
+      </button>
+      <button (click)="submitCrear()" [disabled]="isCreando || catalogosLoading"
+        class="flex-1 bg-orange-600 text-white py-2.5 rounded-xl hover:bg-orange-700 transition-colors text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
+        <svg *ngIf="isCreando" class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        {{ isCreando ? 'Creando lote...' : 'Crear Lote' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: DETALLE DEL LOTE
+════════════════════════════════════════════════════════════════ -->
+<div *ngIf="isDetailOpen && selectedLote" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gray-900 rounded-2xl w-full max-w-6xl shadow-2xl border border-gray-700 max-h-[92vh] flex flex-col">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-700 flex-shrink-0">
+      <div>
+        <h2 class="text-2xl font-bold text-white font-mono">{{ selectedLote.codigo_lote }}</h2>
+        <p class="text-gray-400">{{ selectedLote.proveedor }} · {{ selectedLote.pais_origen_nombre }}</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="px-3 py-1 rounded-full text-sm font-semibold text-white"
+          [style.backgroundColor]="selectedLote.estado_lote_color">{{ selectedLote.estado_lote_nombre }}</span>
+        <button (click)="closeDetail()" class="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="flex-1 overflow-y-auto">
+
+      <!-- Info + Historial -->
+      <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- Columna izquierda: datos del lote -->
+        <div class="space-y-6">
+          <!-- Progreso -->
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-400">Progreso del ciclo</span>
+              <span class="text-white font-medium">{{ selectedLote.estado_lote_orden }}/10 etapas</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+              <div class="h-2 rounded-full transition-all duration-500"
+                [style.width.%]="(selectedLote.estado_lote_orden / 10) * 100"
+                [style.backgroundColor]="selectedLote.estado_lote_color"></div>
+            </div>
+          </div>
+
+          <!-- Unidades -->
+          <div class="bg-gray-800/50 rounded-xl p-4 grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p class="text-2xl font-bold text-white">{{ selectedLote.total_unidades }}</p>
+              <p class="text-xs text-gray-400">Total</p>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-blue-400">{{ selectedLote.unidades_registradas }}</p>
+              <p class="text-xs text-gray-400">Registradas</p>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-green-400">{{ selectedLote.unidades_disponibles }}</p>
+              <p class="text-xs text-gray-400">Disponibles</p>
+            </div>
+          </div>
+
+          <!-- Logística -->
+          <div class="space-y-3">
+            <h3 class="text-white font-semibold">Logística</h3>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div><p class="text-gray-400">Puerto Origen</p><p class="text-white">{{ selectedLote.puerto_origen }}</p></div>
+              <div><p class="text-gray-400">Puerto Destino</p><p class="text-white">{{ selectedLote.puerto_destino }}</p></div>
+              <div><p class="text-gray-400">Sede Destino</p><p class="text-white">{{ selectedLote.sede_destino_nombre }}</p></div>
+              <div><p class="text-gray-400">Agente Aduanal</p><p class="text-white">{{ selectedLote.agente_aduanal || '—' }}</p></div>
+              <div><p class="text-gray-400">Número BL</p><p class="text-white font-mono">{{ selectedLote.numero_bl || '—' }}</p></div>
+              <div><p class="text-gray-400">Contenedores</p><p class="text-white">{{ selectedLote.numero_contenedores || '—' }}</p></div>
+              <div><p class="text-gray-400">Valor FOB</p><p class="text-white">${{ selectedLote.valor_fob_usd || '—' }}</p></div>
+              <div><p class="text-gray-400">Días en tránsito</p><p class="text-white">{{ selectedLote.dias_en_transito ?? '—' }}</p></div>
+            </div>
+          </div>
+
+          <!-- Fechas -->
+          <div class="space-y-3">
+            <h3 class="text-white font-semibold">Fechas</h3>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div><p class="text-gray-400">Orden de compra</p><p class="text-white">{{ formatDate(selectedLote.fecha_orden_compra) }}</p></div>
+              <div><p class="text-gray-400">Embarque estimado</p><p class="text-white">{{ formatDate(selectedLote.fecha_embarque_estimado) }}</p></div>
+              <div><p class="text-gray-400">Embarque real</p><p class="text-white">{{ formatDate(selectedLote.fecha_embarque_real) }}</p></div>
+              <div><p class="text-gray-400">Llegada estimada</p><p [class]="getEtaColor(selectedLote)" class="font-medium">{{ formatDate(selectedLote.fecha_llegada_estimada) }}</p></div>
+              <div><p class="text-gray-400">Llegada real</p><p class="text-green-400 font-medium">{{ formatDate(selectedLote.fecha_llegada_real) }}</p></div>
+            </div>
+          </div>
+
+          <div *ngIf="selectedLote.notas">
+            <p class="text-gray-400 text-sm mb-1">Notas</p>
+            <p class="text-gray-300 text-sm bg-gray-800/50 rounded-lg p-3">{{ selectedLote.notas }}</p>
+          </div>
+        </div>
+
+        <!-- Columna derecha: historial -->
+        <div>
+          <h3 class="text-white font-semibold mb-4">Historial de Estados</h3>
+          <div class="space-y-3">
+            <div *ngFor="let h of selectedLote.historial; let last = last" class="relative">
+              <div *ngIf="!last" class="absolute left-3.5 top-8 w-0.5 h-full bg-gray-700"></div>
+              <div class="flex gap-3">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                  [style.backgroundColor]="h.estado_nuevo_color + '33'"
+                  [style.borderColor]="h.estado_nuevo_color" style="border-width:2px">
+                  <div class="w-2 h-2 rounded-full" [style.backgroundColor]="h.estado_nuevo_color"></div>
                 </div>
-                <div class="flex-1">
-                  <div class="bg-gray-800/50 p-4 rounded-lg">
-                    <div class="flex justify-between items-start mb-2">
-                      <h4 class="font-semibold text-white">{{ event.status }}</h4>
-                      <span class="text-xs text-gray-400">{{ formatDateTime(event.timestamp) }}</span>
-                    </div>
-                    <p class="text-gray-400 text-sm mb-1">{{ event.location }}</p>
-                    <p class="text-gray-300 text-sm">{{ event.description }}</p>
+                <div class="flex-1 bg-gray-800/50 rounded-xl p-3 mb-3">
+                  <div class="flex justify-between items-start mb-1">
+                    <span class="text-white text-sm font-medium">{{ h.estado_nuevo_nombre }}</span>
+                    <span class="text-xs text-gray-500">{{ formatDateTime(h.fecha_cambio) }}</span>
                   </div>
+                  <p *ngIf="h.ubicacion" class="text-gray-400 text-xs">📍 {{ h.ubicacion }}</p>
+                  <p *ngIf="h.notas" class="text-gray-300 text-xs mt-1">{{ h.notas }}</p>
+                  <p *ngIf="h.responsable_nombre" class="text-gray-500 text-xs mt-1">por {{ h.responsable_nombre }}</p>
                 </div>
+              </div>
+            </div>
+            <p *ngIf="selectedLote.historial.length === 0" class="text-gray-400 text-sm">Sin historial.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Vehículos Registrados ─────────────────────────────── -->
+      <div class="border-t border-gray-700"></div>
+      <div class="px-6 py-5">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="bg-orange-600/10 p-2 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div>
+              <h3 class="text-white font-semibold">Vehículos registrados en este lote</h3>
+              <p class="text-gray-400 text-xs">{{ vehiculosDelLote.length }} de {{ selectedLote.total_unidades }} unidades cargadas</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div *ngIf="vehiculosDelLote.length === 0"
+          class="text-center py-10 border border-dashed border-gray-700 rounded-xl">
+          <svg class="mx-auto mb-3 text-gray-600" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <p class="text-gray-400 text-sm font-medium">Sin vehículos registrados</p>
+          <p class="text-gray-500 text-xs mt-1">Usa "Agregar Vehículos" para registrar las unidades de este lote.</p>
+        </div>
+
+        <!-- Lista de vehículos -->
+        <div *ngIf="vehiculosDelLote.length > 0" class="space-y-2">
+          <div *ngFor="let v of vehiculosDelLote; let i = index"
+            class="bg-gray-800/40 rounded-xl border border-gray-700/60 p-4 hover:border-gray-600 transition-colors">
+            <div class="flex items-start justify-between gap-4">
+
+              <!-- Número + VIN -->
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-7 h-7 rounded-full bg-orange-600/20 border border-orange-600/40 flex items-center justify-center flex-shrink-0">
+                  <span class="text-orange-400 text-xs font-bold">{{ i + 1 }}</span>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-white font-mono text-sm font-semibold truncate">{{ v.vin }}</p>
+                  <p class="text-gray-400 text-xs">{{ v.marca || '' }} {{ v.modelo || '' }} {{ v.version || '' }}</p>
+                </div>
+              </div>
+
+              <!-- Estado -->
+              <span class="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-900/40 text-blue-300 border border-blue-700/30">
+                {{ v.nombre_estado || 'Sin estado' }}
+              </span>
+            </div>
+
+            <!-- Detalles secundarios -->
+            <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              <div>
+                <p class="text-gray-500 mb-0.5">Color Exterior</p>
+                <p class="text-gray-200 font-medium">{{ v.color_exterior || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500 mb-0.5">Color Interior</p>
+                <p class="text-gray-200 font-medium">{{ v.color_interior || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500 mb-0.5">N° Motor</p>
+                <p class="text-gray-200 font-mono">{{ v.numero_motor || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500 mb-0.5">Precio Lista</p>
+                <p class="text-green-400 font-semibold">{{ v.precio_lista_sugerido ? '$' + v.precio_lista_sugerido : '—' }}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="flex gap-3 pt-6 mt-6 border-t border-gray-700">
-        <button class="flex-1 bg-orange-600 text-white py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors">Ver en Mapa</button>
-        <button class="flex-1 bg-gray-700 text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-600 transition-colors">Notificar Cliente</button>
+      <!-- ── Manifiesto de Vehículos ─────────────────────────────── -->
+      <div class="border-t border-gray-700 mx-6 mb-1"></div>
+
+      <div class="px-6 py-5">
+        <!-- Toggle header -->
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-white font-semibold">Manifiesto de Vehículos</h3>
+            <p class="text-gray-400 text-xs mt-0.5">
+              {{ selectedLote.unidades_registradas }} vehículos registrados · capacidad estimada {{ selectedLote.total_unidades }}
+            </p>
+          </div>
+          <button *ngIf="!isManifiestoOpen && slotsDisponibles > 0" (click)="openManifiesto()"
+            class="flex items-center gap-2 bg-blue-600/20 text-blue-400 border border-blue-600/30 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar Vehículos
+          </button>
+          <span *ngIf="!isManifiestoOpen && slotsDisponibles === 0"
+            class="text-xs text-green-400 bg-green-900/30 border border-green-700/40 px-3 py-1.5 rounded-lg font-medium">
+            Lote completo
+          </span>
+          <button *ngIf="isManifiestoOpen" (click)="closeManifiesto()"
+            class="flex items-center gap-2 bg-gray-700 text-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-600 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+            Cerrar panel
+          </button>
+        </div>
+
+        <!-- Éxito de guardado anterior -->
+        <div *ngIf="manifiestoSuccess && !isManifiestoOpen"
+          class="bg-green-900/20 border border-green-700 rounded-lg p-3 text-green-400 text-sm flex items-center gap-2 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          {{ manifiestoSuccess }}
+        </div>
+
+        <!-- Panel de agregar vehículos -->
+        <div *ngIf="isManifiestoOpen" class="bg-gray-800/40 rounded-2xl border border-gray-700 p-5 space-y-5">
+
+          <!-- Carga marcas -->
+          <div *ngIf="isLoadingMarcas" class="flex justify-center py-6">
+            <div class="w-7 h-7 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+
+          <div *ngIf="!isLoadingMarcas">
+            <h4 class="text-white font-semibold mb-4 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              Datos del vehículo
+            </h4>
+
+            <!-- Cascada Marca → Modelo → Versión -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5">Marca *</label>
+                <select [(ngModel)]="vehiculoForm.marca_id" (change)="onMarcaChange()" class="input-field">
+                  <option [value]="0" disabled>Seleccionar...</option>
+                  <option *ngFor="let m of marcas" [value]="m.id">{{ m.nombre }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5">Modelo *</label>
+                <select [(ngModel)]="vehiculoForm.modelo_id" (change)="onModeloChange()" class="input-field"
+                  [disabled]="!vehiculoForm.marca_id || isLoadingModelos">
+                  <option [value]="0" disabled>{{ isLoadingModelos ? 'Cargando...' : 'Seleccionar...' }}</option>
+                  <option *ngFor="let m of modelos" [value]="m.id">{{ m.nombre }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5">Versión / Trim *</label>
+                <select [(ngModel)]="vehiculoForm.version_id" class="input-field"
+                  [disabled]="!vehiculoForm.modelo_id || isLoadingVersiones">
+                  <option [value]="0" disabled>{{ isLoadingVersiones ? 'Cargando...' : 'Seleccionar...' }}</option>
+                  <option *ngFor="let v of versiones" [value]="v.id">
+                    {{ v.nombre_version }} — {{ v.transmision }} {{ v.motorizacion }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Datos únicos por vehículo -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5">VIN *</label>
+                <input type="text" [(ngModel)]="vehiculoForm.vin" placeholder="LVVDB11B4ND000001"
+                  class="input-field font-mono text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5">Color Exterior *</label>
+                <select [(ngModel)]="vehiculoForm.color_exterior" class="input-field">
+                  <option value="" disabled>Seleccionar color...</option>
+                  <option *ngFor="let c of coloresDisponibles" [value]="c">{{ c }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5">Color Interior</label>
+                <select [(ngModel)]="vehiculoForm.color_interior" class="input-field">
+                  <option value="">— Sin especificar —</option>
+                  <option *ngFor="let c of coloresDisponibles" [value]="c">{{ c }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5">Número de Motor</label>
+                <input type="text" [(ngModel)]="vehiculoForm.numero_motor" placeholder="4G15S..." class="input-field font-mono text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5">Número de Chasis</label>
+                <input type="text" [(ngModel)]="vehiculoForm.numero_chasis" placeholder="CHX..." class="input-field font-mono text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5">Precio Lista (USD)</label>
+                <input type="number" [(ngModel)]="vehiculoForm.precio_lista_sugerido" min="0" step="0.01"
+                  placeholder="0.00" class="input-field" />
+              </div>
+            </div>
+
+            <div *ngIf="manifiestoError" class="text-red-400 text-sm bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2 mb-3">
+              {{ manifiestoError }}
+            </div>
+
+            <button (click)="agregarVehiculo()"
+              [disabled]="!vehiculoForm.version_id || !vehiculoForm.vin || !vehiculoForm.color_exterior"
+              class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Agregar al manifiesto
+            </button>
+          </div>
+
+          <!-- Lista pendiente de guardar -->
+          <div *ngIf="vehiculosManifiesto.length > 0" class="space-y-2 pt-2 border-t border-gray-700">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-white text-sm font-semibold">
+                Pendientes de guardar ({{ vehiculosManifiesto.length }})
+              </h4>
+              <span class="text-xs"
+                [class]="vehiculosManifiesto.length > slotsDisponibles ? 'text-yellow-400' : 'text-gray-400'">
+                {{ slotsDisponibles }} slots disponibles
+              </span>
+            </div>
+            <div *ngFor="let v of vehiculosManifiesto; let i = index"
+              class="bg-gray-900/60 rounded-xl border border-gray-700/60 p-3.5 flex items-center justify-between group">
+              <div class="flex items-center gap-3">
+                <div class="bg-blue-600/10 p-2 rounded-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                </div>
+                <div>
+                  <p class="text-white text-sm font-medium">{{ v.version_label }}</p>
+                  <p class="text-gray-400 text-xs font-mono">{{ v.vin }} · {{ v.color_exterior }}</p>
+                </div>
+              </div>
+              <button (click)="quitarVehiculo(i)"
+                class="text-gray-600 hover:text-red-400 transition-colors p-1.5 opacity-0 group-hover:opacity-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Estado vacío -->
+          <div *ngIf="vehiculosManifiesto.length === 0 && !isLoadingMarcas"
+            class="text-center py-4 border border-dashed border-gray-700 rounded-xl">
+            <p class="text-gray-400 text-sm">Completa el formulario y presiona "Agregar al manifiesto".</p>
+            <p class="text-gray-500 text-xs mt-1">Puedes agregar varios vehículos antes de guardar.</p>
+          </div>
+
+          <!-- Éxito inline -->
+          <div *ngIf="manifiestoSuccess"
+            class="bg-green-900/20 border border-green-700 rounded-lg p-3 text-green-400 text-sm flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ manifiestoSuccess }}
+          </div>
+
+          <!-- Botón guardar -->
+          <div class="flex justify-end pt-2">
+            <button (click)="guardarManifiesto()"
+              [disabled]="isGuardando || vehiculosManifiesto.length === 0"
+              class="flex items-center gap-2 bg-orange-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-orange-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+              <svg *ngIf="isGuardando" class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              <svg *ngIf="!isGuardando" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              {{ isGuardando ? 'Guardando...' : 'Guardar ' + vehiculosManifiesto.length + ' vehículo(s)' }}
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <!-- ── Avanzar estado ──────────────────────────────────────── -->
+      <div class="p-6 border-t border-gray-700">
+        <div *ngIf="!isAvanzarOpen">
+          <button *ngIf="estadosSiguientes.length > 0" (click)="openAvanzar()"
+            class="w-full bg-orange-600 text-white py-3 rounded-xl font-semibold hover:bg-orange-700 transition-colors">
+            Avanzar Estado del Lote
+          </button>
+          <p *ngIf="estadosSiguientes.length === 0" class="text-center text-gray-400 text-sm">Estado final alcanzado.</p>
+        </div>
+
+        <div *ngIf="isAvanzarOpen" class="space-y-4">
+          <h4 class="text-white font-semibold">Selecciona el nuevo estado</h4>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <button *ngFor="let e of estadosSiguientes" (click)="avanzarEstadoId = e.id"
+              [class]="avanzarEstadoId === e.id ? 'ring-2 ring-white' : 'opacity-70 hover:opacity-100'"
+              class="px-3 py-2 rounded-lg text-white text-sm font-medium transition-all"
+              [style.backgroundColor]="e.color_hex">{{ e.nombre }}</button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input type="text" [(ngModel)]="avanzarUbicacion" placeholder="Ubicación actual (opcional)" class="input-field" />
+            <input type="text" [(ngModel)]="avanzarNotas" placeholder="Notas (opcional)" class="input-field" />
+          </div>
+          <div *ngIf="avanzarError" class="text-red-400 text-sm bg-red-900/20 rounded-lg p-3">{{ avanzarError }}</div>
+          <div class="flex gap-3">
+            <button (click)="closeAvanzar()" class="flex-1 bg-gray-700 text-gray-300 py-2.5 rounded-xl hover:bg-gray-600 transition-colors text-sm">
+              Cancelar
+            </button>
+            <button (click)="submitAvanzar()" [disabled]="!avanzarEstadoId || isAvanzando"
+              class="flex-1 bg-orange-600 text-white py-2.5 rounded-xl hover:bg-orange-700 transition-colors text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
+              <svg *ngIf="isAvanzando" class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              {{ isAvanzando ? 'Procesando...' : 'Confirmar Avance' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /flex-1 overflow-y-auto -->
   </div>
 </div>

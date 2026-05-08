@@ -3,8 +3,8 @@ from django.db import models
 class Marca(models.Model):
     nombre = models.CharField(max_length=255)
     pais_origen = models.ForeignKey(
-        'catalogos.CtPais', 
-        on_delete=models.PROTECT, 
+        'catalogos.CtPais',
+        on_delete=models.PROTECT,
         db_column='pais_origen'
     )
 
@@ -20,8 +20,8 @@ class Modelo(models.Model):
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE, db_column='marca_id')
     nombre = models.CharField(max_length=255)
     tipo = models.ForeignKey(
-        'catalogos.CtTipoModelo', 
-        on_delete=models.PROTECT, 
+        'catalogos.CtTipoModelo',
+        on_delete=models.PROTECT,
         db_column='tipo'
     )
 
@@ -46,7 +46,12 @@ class VersionTrim(models.Model):
 
 class EquipamientoBase(models.Model):
     id = models.AutoField(primary_key=True)
-    version = models.ForeignKey('VersionTrim', on_delete=models.CASCADE, related_name='equipamiento')
+    version = models.ForeignKey(
+        VersionTrim,
+        on_delete=models.CASCADE,
+        related_name='equipamiento',
+        db_column='version_id'
+    )
     descripcion = models.TextField(null=True, blank=True)
     nombre_caracteristica = models.CharField(max_length=255)
 
@@ -59,24 +64,40 @@ class EquipamientoBase(models.Model):
 
 class VehiculoNuevo(models.Model):
     version = models.ForeignKey(VersionTrim, on_delete=models.PROTECT, db_column='version_id')
+    lote = models.ForeignKey(
+        'lotes.LoteImportacion',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='lote_id',
+        related_name='vehiculos'
+    )
+    sede_actual = models.ForeignKey(
+        'sedes.Sede',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='sede_actual_id',
+        related_name='vehiculos'
+    )
     vin = models.CharField(max_length=255, unique=True, db_column='vin')
-    numero_motor = models.CharField(max_length=255, unique=True)
-    numero_chasis = models.CharField(max_length=255, unique=True)
+    numero_motor = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    numero_chasis = models.CharField(max_length=255, unique=True, null=True, blank=True)
     color_exterior = models.CharField(max_length=100, null=True, blank=True)
     color_interior = models.CharField(max_length=100, null=True, blank=True)
     fecha_llegada = models.DateTimeField(null=True, blank=True)
     ubicacion_fisica = models.ForeignKey(
-        'catalogos.CtEstadoVenezuela', 
-        on_delete=models.SET_NULL, 
+        'catalogos.CtEstadoVenezuela',
+        on_delete=models.SET_NULL,
         db_column='ubicacion_estado_id',
-        null=True, 
+        null=True,
         blank=True,
         verbose_name="Ubicación (Estado)"
     )
     precio_lista_sugerido = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     estado = models.ForeignKey(
-        'catalogos.CtEstadoVehiculo', 
-        on_delete=models.PROTECT, 
+        'catalogos.CtEstadoVehiculo',
+        on_delete=models.PROTECT,
         db_column='estado',
         null=True,
         blank=True
@@ -84,21 +105,8 @@ class VehiculoNuevo(models.Model):
 
     class Meta:
         db_table = 'vehiculo_nuevo'
+        verbose_name = 'Vehículo Nuevo'
+        verbose_name_plural = 'Vehículos Nuevos'
 
     def __str__(self):
         return f"{self.vin} ({self.version})"
-
-class EquipamientoBase(models.Model):
-    version = models.ForeignKey(VersionTrim, on_delete=models.CASCADE, db_column='version_id')
-    descripcion = models.CharField(max_length=255, null=True, blank=True)
-    nombre_caracteristica = models.CharField(max_length=255, null=True, blank=True)
-
-    version = models.ForeignKey(
-        'VersionTrim', 
-        related_name='equipamiento',
-        on_delete=models.CASCADE,
-        db_column='version_id'
-    )
-
-    class Meta:
-        db_table = 'equipamiento_base'
