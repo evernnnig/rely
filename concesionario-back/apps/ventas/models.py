@@ -1,5 +1,9 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
+
+DURACION_RESERVA_DIAS_DEFAULT = 7
 
 
 class OrdenVenta(models.Model):
@@ -329,3 +333,172 @@ class DocumentoOrden(models.Model):
         ordering = ['-fecha_subida']
         verbose_name = 'Documento de Orden'
         verbose_name_plural = 'Documentos de Órdenes'
+
+
+# ─────────────────────────────────────────────────────────────────
+# NUEVOS MODELOS: Reserva, PlanPago, CuotaPlan
+# ─────────────────────────────────────────────────────────────────
+
+class Reserva(models.Model):
+    ESTADO_ACTIVA = 'ACTIVA'
+    ESTADO_VENCIDA = 'VENCIDA'
+    ESTADO_CONVERTIDA = 'CONVERTIDA'
+    ESTADO_CANCELADA = 'CANCELADA'
+
+    ESTADO_CHOICES = [
+        (ESTADO_ACTIVA, 'Activa'),
+        (ESTADO_VENCIDA, 'Vencida'),
+        (ESTADO_CONVERTIDA, 'Convertida a Venta'),
+        (ESTADO_CANCELADA, 'Cancelada'),
+    ]
+
+    vehiculo = models.ForeignKey(
+        'vehiculos.VehiculoNuevo',
+        on_delete=models.PROTECT,
+        db_column='vehiculo_id',
+        related_name='reservas',
+    )
+    cliente = models.ForeignKey(
+        'clientes.Cliente',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='cliente_id',
+        related_name='reservas',
+    )
+    vendedor = models.ForeignKey(
+        'vendedores.Vendedor',
+        on_delete=models.PROTECT,
+        null=True,
+        db_column='vendedor_id',
+        related_name='reservas',
+    )
+    orden = models.OneToOneField(
+        OrdenVenta,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='orden_id',
+        related_name='reserva_origen',
+    )
+    fecha_inicio = models.DateTimeField(auto_now_add=True, db_column='fecha_inicio')
+    fecha_vencimiento = models.DateTimeField(db_column='fecha_vencimiento')
+    monto_separacion = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True, db_column='monto_separacion'
+    )
+    estado = models.CharField(
+        max_length=20, choices=ESTADO_CHOICES, default=ESTADO_ACTIVA, db_column='estado'
+    )
+    notas = models.TextField(null=True, blank=True, db_column='notas')
+
+    class Meta:
+        db_table = 'reserva'
+        ordering = ['-fecha_inicio']
+        verbose_name = 'Reserva'
+        verbose_name_plural = 'Reservas'
+
+    def __str__(self):
+        return f"Reserva #{self.id} — {self.vehiculo.vin}"
+
+    @property
+    def esta_vencida(self):
+        return self.estado == self.ESTADO_ACTIVA and timezone.now() > self.fecha_vencimiento
+
+    @property
+    def dias_restantes(self):
+        if self.estado != self.ESTADO_ACTIVA:
+            return 0
+        delta = self.fecha_vencimiento - timezone.now()
+        return max(0, delta.days)
+
+
+class PlanPago(models.Model):
+    TIPO_CONTADO = 'CONTADO'
+    TIPO_CUOTAS = 'CUOTAS_FIJAS'
+    TIPO_HITOS = 'HITOS'
+
+    TIPO_CHOICES = [
+        (TIPO_CONTADO, 'Contado'),
+        (TIPO_CUOTAS, 'Cuotas Fijas'),
+        (TIPO_HITOS, 'Por Hitos'),
+    ]
+
+    PERIODICIDAD_CHOICES = [
+        ('MENSUAL', 'Mensual'),
+        ('TRIMESTRAL', 'Trimestral'),
+        ('SEMESTRAL', 'Semestral'),
+    ]
+
+    ESTADO_CHOICES = [
+        ('ACTIVO', 'Activo'),
+        ('COMPLETADO', 'Completado'),
+        ('EN_MORA', 'En Mora'),
+        ('CANCELADO', 'Cancelado'),
+    ]
+
+    orden = models.OneToOneField(
+        OrdenVenta,
+        on_delete=models.PROTECT,
+        db_column='orden_id',
+        related_name='plan_pago',
+    )
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default=TIPO_CONTADO, db_column='tipo')
+    total_acordado = models.DecimalField(max_digits=12, decimal_places=2, db_column='total_acordado')
+    cuotas_totales = models.IntegerField(default=1, db_column='cuotas_totales')
+    periodicidad = models.CharField(
+        max_length=20, choices=PERIODICIDAD_CHOICES, null=True, blank=True, db_column='periodicidad'
+    )
+    fecha_inicio = models.DateField(db_column='fecha_inicio')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='ACTIVO', db_column='estado')
+
+    class Meta:
+        db_table = 'plan_pago'
+        verbose_name = 'Plan de Pago'
+        verbose_name_plural = 'Planes de Pago'
+
+    def __str__(self):
+        return f"Plan #{self.id} — Orden #{self.orden.codigo_orden}"
+
+    @property
+    def monto_por_cuota(self):
+        if self.cuotas_totales and self.cuotas_totales > 0:
+            return round(float(self.total_acordado) / self.cuotas_totales, 2)
+        return float(self.total_acordado)
+
+
+class CuotaPlan(models.Model):
+    ESTADO_CHOICES = [
+        ('PENDIENTE', 'Pendiente'),
+        ('PAGADA', 'Pagada'),
+        ('VENCIDA', 'Vencida'),
+        ('PERDONADA', 'Perdonada'),
+    ]
+
+    plan = models.ForeignKey(
+        PlanPago,
+        on_delete=models.CASCADE,
+        db_column='plan_id',
+        related_name='cuotas',
+    )
+    transaccion = models.ForeignKey(
+        TransaccionPago,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='transaccion_id',
+        related_name='cuotas_plan',
+    )
+    numero_cuota = models.IntegerField(db_column='numero_cuota')
+    monto_esperado = models.DecimalField(max_digits=12, decimal_places=2, db_column='monto_esperado')
+    fecha_vencimiento = models.DateField(db_column='fecha_vencimiento')
+    fecha_pago_real = models.DateField(null=True, blank=True, db_column='fecha_pago_real')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE', db_column='estado')
+
+    class Meta:
+        db_table = 'cuota_plan'
+        ordering = ['numero_cuota']
+        verbose_name = 'Cuota del Plan'
+        verbose_name_plural = 'Cuotas del Plan'
+
+    def __str__(self):
+        return f"Cuota #{self.numero_cuota} — Plan #{self.plan_id}"

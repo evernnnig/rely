@@ -48,7 +48,7 @@ class VehiculoNuevoSerializer(serializers.ModelSerializer):
     )
     nombre_estado = serializers.ReadOnlyField(source='estado.estado')
     ubicacion_detalle = CtEstadoVenezuelaSerializer(source='ubicacion_fisica', read_only=True)
-    
+    estado_comercial_label = serializers.CharField(source='get_estado_comercial_display', read_only=True)
     equipamiento = EquipamientoBaseSerializer(many=True, read_only=True)
     lote_codigo = serializers.SerializerMethodField()
     fecha_llegada_estimada = serializers.SerializerMethodField()
@@ -73,6 +73,6 @@ class VehiculoNuevoSerializer(serializers.ModelSerializer):
             'id', 'version', 'version_id', 'vin', 'numero_motor',
             'numero_chasis', 'color_exterior', 'color_interior',
             'fecha_llegada', 'ubicacion_fisica', 'ubicacion_detalle', 'precio_lista_sugerido',
-            'estado', 'nombre_estado', 'equipamiento',
-            'lote_codigo', 'fecha_llegada_estimada', 'estado_lote_nombre',
+            'estado', 'nombre_estado', 'estado_comercial', 'estado_comercial_label',
+            'equipamiento', 'lote_codigo', 'fecha_llegada_estimada', 'estado_lote_nombre',
         ]

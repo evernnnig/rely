@@ -63,6 +63,20 @@ class EquipamientoBase(models.Model):
         return f"{self.nombre_caracteristica} - {self.version.nombre_version}"
 
 class VehiculoNuevo(models.Model):
+    ESTADO_COMERCIAL_DISPONIBLE = 1
+    ESTADO_COMERCIAL_RESERVADO = 2
+    ESTADO_COMERCIAL_VENDIDO = 3
+    ESTADO_COMERCIAL_NO_DISPONIBLE = 4
+    ESTADO_COMERCIAL_MANTENIMIENTO = 5
+
+    ESTADO_COMERCIAL_CHOICES = [
+        (1, 'Disponible'),
+        (2, 'Reservado'),
+        (3, 'Vendido'),
+        (4, 'No Disponible'),
+        (5, 'En Mantenimiento'),
+    ]
+
     version = models.ForeignKey(VersionTrim, on_delete=models.PROTECT, db_column='version_id')
     lote = models.ForeignKey(
         'lotes.LoteImportacion',
@@ -95,6 +109,12 @@ class VehiculoNuevo(models.Model):
         verbose_name="Ubicación (Estado)"
     )
     precio_lista_sugerido = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    estado_comercial = models.IntegerField(
+        choices=ESTADO_COMERCIAL_CHOICES,
+        default=1,
+        db_column='estado_comercial',
+        verbose_name='Estado Comercial',
+    )
     estado = models.ForeignKey(
         'catalogos.CtEstadoVehiculo',
         on_delete=models.PROTECT,

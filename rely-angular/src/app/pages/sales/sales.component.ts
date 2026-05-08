@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
-import { VentasService, CreateVentaPayload } from '../../services/ventas.service';
+import { VentasService, CreateVentaPayload, CreateReservaPayload } from '../../services/ventas.service';
 import { VehicleService, VehiculoInventario } from '../../services/vehiculos.service';
 import { CatalogosService, Pais, EstadoVenezuela, EntidadFinanciera, MetodoPago  } from '../../services/catalogos.service';
 import { Router } from '@angular/router';
@@ -122,6 +122,13 @@ export class SalesComponent implements OnInit, OnDestroy {
 
   mostrarConfirmacion = false;
   ultimaVentaCreada: any = null;
+
+  // Reserva
+  tipoOperacion: 'comprar' | 'reservar' | null = null;
+  reservaForm = { dias: 7, monto_separacion: null as number | null, notas: '' };
+  isReservando = false;
+  reservaExitosa = false;
+  reservaReferencia = '';
 
   // Mapa de colores mejorado con más variantes
   private readonly colorHexMap: Record<string, string> = {
@@ -423,9 +430,11 @@ private prepararDatosPDF(): any {
 
   seleccionarUnidad(vehiculo: VehiculoInventario): void {
     if (!vehiculo) return;
-    
+
     this.vehiculoSeleccionado = vehiculo;
     this.paso = 'seleccionado';
+    this.tipoOperacion = null;
+    this.reservaForm = { dias: 7, monto_separacion: null, notas: '' };
     this.actualizarDatosUnidad(vehiculo);
     console.log('✅ Vehículo seleccionado - ID:', vehiculo.id);
     this.detectarCambios();
@@ -475,6 +484,7 @@ private prepararDatosPDF(): any {
     this.versionSeleccionada = null;
     this.colorSeleccionado = null;
     this.vehiculoSeleccionado = null;
+    this.tipoOperacion = null;
     this.formData.vehicleModel = '';
     this.formData.vehicleColor = '';
     this.formData.price = '';
@@ -821,6 +831,45 @@ getNombreMetodoPago(id: string): string {
   return metodo ? metodo.nombre : id;
 }
 
+  elegirComprar(): void {
+    this.tipoOperacion = 'comprar';
+    this.detectarCambios();
+  }
+
+  elegirReservar(): void {
+    this.tipoOperacion = 'reservar';
+    this.detectarCambios();
+  }
+
+  async handleReserva(e: Event): Promise<void> {
+    e.preventDefault();
+    if (!this.vehiculoSeleccionado) {
+      this.error = 'Debe seleccionar un vehículo';
+      return;
+    }
+    this.isReservando = true;
+    this.error = '';
+    try {
+      const payload: CreateReservaPayload = {
+        vehiculo_id: this.vehiculoSeleccionado.id,
+        dias: this.reservaForm.dias || 7,
+        monto_separacion: this.reservaForm.monto_separacion || undefined,
+        notas: this.reservaForm.notas || undefined,
+      };
+      const reserva = await this.ventasService.crearReserva(payload);
+      this.reservaExitosa = true;
+      this.reservaReferencia = `Reserva #${reserva.id}`;
+      this.isSubmitted = true;
+      this.mostrarConfirmacion = false;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      this.manejarErrorVenta(err);
+    } finally {
+      this.isReservando = false;
+      this.detectarCambios();
+    }
+  }
+
   nuevaVenta(): void {
     this.formData = this.createEmptyForm();
     this.limpiarSeleccion();
@@ -829,6 +878,8 @@ getNombreMetodoPago(id: string): string {
     this.successMessage = '';
     this.mostrarConfirmacion = false;
     this.ultimaVentaCreada = null;
+    this.reservaExitosa = false;
+    this.reservaReferencia = '';
     
     this.cargarInventario().catch(err => {
       console.error('Error al recargar inventario:', err);

@@ -57,6 +57,8 @@ export interface VehiculoInventario {
   precio_lista_sugerido: string | null;
   estado: number;
   nombre_estado: string;
+  estado_comercial: number;
+  estado_comercial_label: string;
   lote_codigo: string | null;
   fecha_llegada_estimada: string | null;
   estado_lote_nombre: string | null;
