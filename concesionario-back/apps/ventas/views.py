@@ -6,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.utils import timezone
 
+from apps.catalogos.models import CtEstadoOrden
+from apps.catalogos.models import CtEstadoOrden
 from apps.users.permissions import IsAdminOrVendedor, IsAdminOrGerente
 from .models import OrdenVenta, NotificacionCliente, SeguimientoPago, DocumentoOrden
 from .serializers import (
@@ -100,11 +102,19 @@ class OrdenVentaDetailView(APIView):
         if not orden:
             return Response({'success': False, 'detail': 'Orden no encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
+        # 1. Guarda el estado anterior antes de la validación
+        estado_anterior = orden.estado_orden
+
         serializer = OrdenVentaUpdateSerializer(orden, data=request.data, context={'request': request})
         if not serializer.is_valid():
             return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+        # 2. Guarda la orden con el nuevo estado
         orden_actualizada = serializer.save()
+
+        # 3. Registro de historial y cambio de estado de vehículo
+        # La lógica principal está en el serializer, aquí solo es una confirmación.
+        
         return Response({
             'success': True,
             'data': OrdenVentaSerializer(orden_actualizada).data,
@@ -218,21 +228,32 @@ class RegistrarPagoParcialView(APIView):
                 'detail': 'Número de cuota y monto son requeridos'
             }, status=status.HTTP_400_BAD_REQUEST)
         
+        # Buscar el estado "Pagado" (id=2) o "Pendiente" (id=1)
+        # Ajusta según tu catálogo: 1=Pendiente, 2=Pagado, 3=Verificado, etc.
+        estado_pagado_id = 2  # ID de "Pagado" en tu tabla ct_estado_pago
+        
         pago = SeguimientoPago.objects.create(
             transaccion=transaccion,
             numero_cuota=numero_cuota,
             monto_pagado=monto_pagado,
             fecha_pago=fecha_pago,
             fecha_vencimiento=request.data.get('fecha_vencimiento'),
-            estado_id=2,
+            estado_id=estado_pagado_id,  # ← Usar estado "Pagado"
             comprobante_url=comprobante_url,
             notas=notas
         )
         
+        # Actualizar monto restante
         total_pagado = sum(
-            p.monto_pagado for p in transaccion.pagos_parciales.all()
+            float(p.monto_pagado) for p in transaccion.pagos_parciales.all()
         )
-        transaccion.monto_restante = transaccion.monto - total_pagado
+        transaccion.monto_restante = float(transaccion.monto) - total_pagado
+        
+        # Si ya no hay saldo restante, actualizar estado de pago a "Pagado"
+        if transaccion.monto_restante <= 0:
+            transaccion.monto_restante = 0
+            transaccion.estado_pago_id = 2  # Estado "Pagado"
+        
         transaccion.save()
         
         return Response({
@@ -240,7 +261,6 @@ class RegistrarPagoParcialView(APIView):
             'data': SeguimientoPagoSerializer(pago).data,
             'message': f'Cuota #{numero_cuota} registrada exitosamente'
         })
-
 
 class SubirDocumentoOrdenView(APIView):
     """Sube un documento a la orden"""
@@ -312,4 +332,58 @@ class ActualizarEstadoPagoView(APIView):
         return Response({
             'success': True,
             'message': 'Estado de pago actualizado exitosamente'
+        })
+
+class ActualizarEstadoPagoIndividualView(APIView):
+    """Actualiza el estado de un pago parcial individual"""
+    permission_classes = [IsAuthenticated, IsAdminOrVendedor]
+    
+    @transaction.atomic
+    def patch(self, request, pago_id):
+        try:
+            pago = SeguimientoPago.objects.select_related('transaccion').get(pk=pago_id)
+        except SeguimientoPago.DoesNotExist:
+            return Response({'success': False, 'detail': 'Pago no encontrado'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        
+        nuevo_estado_id = request.data.get('estado_id')
+        if not nuevo_estado_id:
+            return Response({'success': False, 'detail': 'Estado requerido'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        pago.estado_id = nuevo_estado_id
+        pago.save()
+        
+        # Recalcular monto restante de la transacción
+        transaccion = pago.transaccion
+        total_pagado = float(transaccion.monto_inicial or 0)
+        for p in transaccion.pagos_parciales.filter(estado_id__in=[2, 3]):  # Solo pagados/verificados
+            total_pagado += float(p.monto_pagado or 0)
+        
+        transaccion.monto_restante = float(transaccion.monto) - total_pagado
+        if transaccion.monto_restante <= 0:
+            transaccion.monto_restante = 0
+            transaccion.estado_pago_id = 2  # Pagado
+        
+        transaccion.save()
+        
+        return Response({
+            'success': True,
+            'data': SeguimientoPagoSerializer(pago).data,
+            'message': 'Estado actualizado exitosamente'
+        })
+    
+class EstadoOrdenListView(APIView):
+    """
+    Endpoint de solo lectura para obtener los posibles estados de una orden.
+    No requiere permisos estrictos, pero puedes ajustarlo.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        estados = CtEstadoOrden.objects.all()
+        data = [{'id': estado.id, 'nombre': estado.estado_orden} for estado in estados]
+        return Response({
+            'success': True,
+            'data': data
         })

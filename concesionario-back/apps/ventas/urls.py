@@ -1,6 +1,8 @@
 # apps/ventas/urls.py
 from django.urls import path
 from .views import (
+    ActualizarEstadoPagoIndividualView,
+    EstadoOrdenListView,
     OrdenVentaListCreateView, 
     OrdenVentaDetailView,
     OrdenVentaDetalleCompletoView,
@@ -18,4 +20,6 @@ urlpatterns = [
     path('ordenes/<int:pk>/pago-parcial/', RegistrarPagoParcialView.as_view(), name='ordenes-pago-parcial'),
     path('ordenes/<int:pk>/subir-documento/', SubirDocumentoOrdenView.as_view(), name='ordenes-subir-documento'),
     path('ordenes/<int:orden_id>/actualizar-estado-pago/', ActualizarEstadoPagoView.as_view(), name='ordenes-actualizar-estado-pago'),
+    path('pagos/<int:pago_id>/estado/', ActualizarEstadoPagoIndividualView.as_view(), name='pago-actualizar-estado'),
+    path('estados-orden/', EstadoOrdenListView.as_view(), name='estados-orden-list'),
 ]

@@ -154,11 +154,10 @@ class OrdenVentaCreateSerializer(serializers.Serializer):
 # SERIALIZER PARA ACTUALIZAR ESTADO DE ORDEN
 # ============================================================
 class OrdenVentaUpdateSerializer(serializers.Serializer):
-    """Actualiza el estado de una orden y registra el cambio en el historial"""
     estado_orden = serializers.IntegerField()
 
     def validate_estado_orden(self, value):
-        from apps.catalogos.models import CtEstadoOrden
+        # Mantén tu validación existente
         if not CtEstadoOrden.objects.filter(id=value).exists():
             raise serializers.ValidationError('Estado de orden inválido')
         return value
@@ -167,8 +166,23 @@ class OrdenVentaUpdateSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         estado_anterior = instance.estado_orden
         instance.estado_orden_id = validated_data['estado_orden']
+        
+        # 1. Actualiza el estado del vehículo según el nuevo estado de la orden
+        if instance.vehiculo:
+            nuevo_estado_id = validated_data['estado_orden']
+            
+            # Completada (5) → Vehículo Vendido (asumiendo ID 3 en tu catálogo, ¡ajústalo!)
+            if nuevo_estado_id == 5:  
+                instance.vehiculo.estado_id = 3  # ID "Vendido" - AJUSTA SEGÚN TU CATÁLOGO
+                instance.vehiculo.save()
+            # Cancelada (6) o Rechazada (4) → Vehículo Disponible (ID 1)
+            elif nuevo_estado_id in [4, 6]:  
+                instance.vehiculo.estado_id = 1  # ID "Disponible" - AJUSTA SEGÚN TU CATÁLOGO
+                instance.vehiculo.save()
+
         instance.save()
 
+        # 2. Registro en el historial
         try:
             vendedor = self.context['request'].user.vendedor
         except Exception:
@@ -297,6 +311,7 @@ class OrdenVentaDetalleSerializer(serializers.ModelSerializer):
     notificaciones = serializers.SerializerMethodField()
     documentos = serializers.SerializerMethodField()
     historial_estados = serializers.SerializerMethodField()
+    estado_orden_id = serializers.IntegerField(read_only=True)
     
     class Meta:
         model = OrdenVenta
@@ -304,8 +319,9 @@ class OrdenVentaDetalleSerializer(serializers.ModelSerializer):
             'id', 'codigo_orden', 'precio_final_venta', 'fecha_creacion',
             'cliente_info', 'vendedor_info', 'vehiculo_info',
             'transaccion', 'pagos_parciales', 'notificaciones',
-            'documentos', 'historial_estados', 'estado_orden'
+            'documentos', 'historial_estados', 'estado_orden_id'
         ]
+    
     
     def get_cliente_info(self, obj):
         if not obj.cliente:
@@ -366,6 +382,10 @@ class OrdenVentaDetalleSerializer(serializers.ModelSerializer):
         transaccion = obj.transacciones_pago.first()
         if not transaccion:
             return None
+        
+        # Calcular porcentaje basado en pagos parciales + monto inicial
+        porcentaje = self._calcular_porcentaje_pagado(transaccion)
+        
         return {
             'id': transaccion.id,
             'monto_total': str(transaccion.monto),
@@ -381,8 +401,24 @@ class OrdenVentaDetalleSerializer(serializers.ModelSerializer):
             'estado_pago_nombre': transaccion.estado_pago.estado_pago if transaccion.estado_pago else 'Pendiente',
             'entidad_financiera_id': transaccion.entidad_financiera_id,
             'entidad_financiera_nombre': transaccion.entidad_financiera.nombre if transaccion.entidad_financiera else None,
-            'porcentaje_pagado': self._calcular_porcentaje_pagado(transaccion),
+            'porcentaje_pagado': porcentaje,  # ← Usar el nuevo cálculo
         }
+
+    def _calcular_porcentaje_pagado(self, transaccion):
+        """Calcula el porcentaje real basado en pagos parciales + monto inicial"""
+        if not transaccion.monto or float(transaccion.monto) == 0:
+            return 0
+        
+        monto_total = float(transaccion.monto)
+        
+        # Sumar monto inicial + todos los pagos parciales
+        total_pagado = float(transaccion.monto_inicial or 0)
+        
+        for pago in transaccion.pagos_parciales.all():
+            total_pagado += float(pago.monto_pagado or 0)
+        
+        porcentaje = round((total_pagado / monto_total) * 100, 2)
+        return min(porcentaje, 100)  # No puede exceder 100%
     
     def get_pagos_parciales(self, obj):
         transaccion = obj.transacciones_pago.first()
@@ -417,7 +453,3 @@ class OrdenVentaDetalleSerializer(serializers.ModelSerializer):
         }
         return metodos.get(metodo_id, f'Método {metodo_id}')
     
-    def _calcular_porcentaje_pagado(self, transaccion):
-        if not transaccion.monto or float(transaccion.monto) == 0:
-            return 0
-        return round((float(transaccion.monto_inicial or 0) / float(transaccion.monto)) * 100, 2)
